@@ -168,6 +168,62 @@ func TestJson(t *testing.T) {
 	}
 }
 
+func TestWithIntParseError(t *testing.T) {
+	config := struct {
+		Struct struct {
+			Key int
+		}
+	}{}
+
+	input := "STRUCT_KEY=text"
+
+	if err := Load(&config).String(input); err == nil {
+		t.Error("expected parse error")
+	}
+}
+
+func TestWithUintParseError(t *testing.T) {
+	config := struct {
+		Struct struct {
+			Key uint
+		}
+	}{}
+
+	input := "STRUCT_KEY=text"
+
+	if err := Load(&config).String(input); err == nil {
+		t.Error("expected parse error")
+	}
+}
+
+func TestWithFloatParseError(t *testing.T) {
+	config := struct {
+		Struct struct {
+			Key float64
+		}
+	}{}
+
+	input := "STRUCT_KEY=text"
+
+	if err := Load(&config).String(input); err == nil {
+		t.Error("expected parse error")
+	}
+}
+
+func TestWithBoolParseError(t *testing.T) {
+	config := struct {
+		Struct struct {
+			Key bool
+		}
+	}{}
+
+	input := "STRUCT_KEY=text"
+
+	if err := Load(&config).String(input); err == nil {
+		t.Error("expected parse error")
+	}
+}
+
 func data(t *testing.T) ([]byte, Config) {
 	input, err := ioutil.ReadFile("testdata/.env")
 	if err != nil {
@@ -260,8 +316,8 @@ func TestWithNilStructPassed(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		if test() == nil {
+	for _, tt := range tests {
+		if tt() == nil {
 			t.Fatal("expected error")
 		}
 	}
