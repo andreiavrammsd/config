@@ -168,6 +168,8 @@ func TestJson(t *testing.T) {
 	}
 }
 
+const parseErrorInput = "STRUCT_KEY=text"
+
 func TestWithIntParseError(t *testing.T) {
 	config := struct {
 		Struct struct {
@@ -175,9 +177,7 @@ func TestWithIntParseError(t *testing.T) {
 		}
 	}{}
 
-	input := "STRUCT_KEY=text"
-
-	if err := Load(&config).String(input); err == nil {
+	if err := Load(&config).String(parseErrorInput); err == nil {
 		t.Error("expected parse error")
 	}
 }
@@ -189,9 +189,7 @@ func TestWithUintParseError(t *testing.T) {
 		}
 	}{}
 
-	input := "STRUCT_KEY=text"
-
-	if err := Load(&config).String(input); err == nil {
+	if err := Load(&config).String(parseErrorInput); err == nil {
 		t.Error("expected parse error")
 	}
 }
@@ -203,9 +201,7 @@ func TestWithFloatParseError(t *testing.T) {
 		}
 	}{}
 
-	input := "STRUCT_KEY=text"
-
-	if err := Load(&config).String(input); err == nil {
+	if err := Load(&config).String(parseErrorInput); err == nil {
 		t.Error("expected parse error")
 	}
 }
@@ -217,9 +213,7 @@ func TestWithBoolParseError(t *testing.T) {
 		}
 	}{}
 
-	input := "STRUCT_KEY=text"
-
-	if err := Load(&config).String(input); err == nil {
+	if err := Load(&config).String(parseErrorInput); err == nil {
 		t.Error("expected parse error")
 	}
 }
