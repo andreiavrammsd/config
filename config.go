@@ -8,6 +8,7 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"os"
 )
 
 const tag = "env"
@@ -24,10 +25,11 @@ func (l *Loader) Env() error {
 		return err
 	}
 
-	return fromEnv(l.i)
+	return parseIntoStruct(l.i, os.Getenv)
 }
 
-// EnvFile loads config into struct from environment variables in files (dotenv).
+// EnvFile loads config into struct from environment variables in one or multiple files (dotenv).
+// If not file is passed, the default is ".env".
 func (l *Loader) EnvFile(files ...string) error {
 	if err := checkNilStruct(l.i); err != nil {
 		return err
