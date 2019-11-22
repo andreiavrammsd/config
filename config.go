@@ -3,29 +3,6 @@
 // Fields can have the `env` tag which defines the key of the value. If no tag provided, the key will be the
 // uppercase full path of the field (all the fields names starting the root until current field, joined by underscore).
 // The `json` tag will be used for loading from JSON.
-//
-// Usage:
-//
-// package main
-//
-// import (
-// 	 "fmt"
-// 	 "log"
-//
-// 	 "github.com/andreiavrammsd/config"
-// )
-//
-// type Config struct {
-//	  Username string `env:"LOGNAME"`
-// }
-//
-// func main() {
-//	 cfg := Config{}
-//	 if err := config.Load(&cfg).Env(); err != nil {
-//		log.Fatalf("cannot load config: %s", err)
-//	 }
-// 	 fmt.Println(cfg)
-// }
 package config
 
 import (
