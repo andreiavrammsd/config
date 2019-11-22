@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"fmt"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -18,14 +19,18 @@ func parseIntoStruct(i interface{}, data getValue) error {
 	typ := reflect.TypeOf(i)
 
 	if typ.Kind() != reflect.Ptr {
-		return errors.New("value passed instead of reference")
+		return errors.New("config: value passed instead of reference")
 	}
 
 	if typ.Elem().Kind() != reflect.Struct {
-		return errors.New("non struct passed")
+		return errors.New("config: non struct passed")
 	}
 
-	return parse(typ, reflect.ValueOf(i), data, "")
+	if err := parse(typ, reflect.ValueOf(i), data, ""); err != nil {
+		return fmt.Errorf("config: %s", err)
+	}
+
+	return nil
 }
 
 func parse(typ reflect.Type, val reflect.Value, getValue getValue, path string) error {

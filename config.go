@@ -71,7 +71,7 @@ func (l *Loader) JSON(input json.RawMessage) error {
 
 func checkNilStruct(i interface{}) error {
 	if i == nil {
-		return errors.New("nil struct passed")
+		return errors.New("config: nil struct passed")
 	}
 
 	return nil
