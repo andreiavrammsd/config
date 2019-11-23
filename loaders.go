@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 )
@@ -19,13 +20,14 @@ func fromEnvFile(i interface{}, files ...string) error {
 }
 
 func fromBytes(i interface{}, input []byte) error {
-	f := func() getValue {
-		vars := vars(input)
-
-		return func(s string) string {
-			return vars[s]
-		}
+	v, err := vars(bytes.NewReader(input))
+	if err != nil {
+		return err
 	}
 
-	return parseIntoStruct(i, f())
+	f := func(s string) string {
+		return v[s]
+	}
+
+	return parseIntoStruct(i, f)
 }

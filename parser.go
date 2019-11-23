@@ -1,17 +1,12 @@
 package config
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 )
-
-const keyValuePattern = `(?i)([a-z0-9_-]+)=([^#]+)`
 
 type getValue func(string) string
 
@@ -68,27 +63,6 @@ func parse(typ reflect.Type, val reflect.Value, getValue getValue, path string) 
 	}
 
 	return nil
-}
-
-func vars(input []byte) map[string]string {
-	r := regexp.MustCompile(keyValuePattern)
-	commentStart := byte('#')
-	vars := make(map[string]string)
-
-	scanner := bufio.NewScanner(bytes.NewReader(input))
-	for scanner.Scan() {
-		line := bytes.TrimSpace(scanner.Bytes())
-		if line[0] == commentStart {
-			continue
-		}
-
-		m := r.FindSubmatch(line)
-		if len(m) > 2 {
-			vars[string(bytes.TrimSpace(m[1]))] = string(bytes.Trim(m[2], ` "'`))
-		}
-	}
-
-	return vars
 }
 
 func value(field *reflect.StructField, getValue getValue, path string) string {

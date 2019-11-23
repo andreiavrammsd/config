@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -51,9 +52,12 @@ type Struct struct {
 }
 
 func TestEnv(t *testing.T) {
-	input, expected := data(t)
+	input, expected := testdata(t)
 
-	kv := vars(input)
+	kv, err := vars(bytes.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
 	for k, v := range kv {
 		if err := os.Setenv(k, v); err != nil {
 			t.Fatalf(`cannot set env variable "%s" with value "%s": "%s"`, k, v, err)
@@ -77,7 +81,7 @@ func TestEnv(t *testing.T) {
 }
 
 func TestEnvFile(t *testing.T) {
-	_, expected := data(t)
+	_, expected := testdata(t)
 	file := "testdata/.env"
 
 	actual := Config{}
@@ -91,7 +95,7 @@ func TestEnvFile(t *testing.T) {
 }
 
 func TestBytes(t *testing.T) {
-	input, expected := data(t)
+	input, expected := testdata(t)
 
 	actual := Config{}
 	if err := Load(&actual).Bytes(input); err != nil {
@@ -104,7 +108,7 @@ func TestBytes(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	input, expected := data(t)
+	input, expected := testdata(t)
 
 	actual := Config{}
 	if err := Load(&actual).String(string(input)); err != nil {
@@ -119,7 +123,7 @@ func TestString(t *testing.T) {
 func TestJson(t *testing.T) {
 	input := json.RawMessage(`{ 
 	   "StructPtr":null,
-	   "String":"string",
+	   "String":" string\\\" ",
 	   "A":1,
 	   "B":2,
 	   "C":3,
@@ -136,7 +140,7 @@ func TestJson(t *testing.T) {
 	   "IsSet":true,
 	   "Redis":{ 
 		  "Connection":{ 
-			 "Host":"localhost",
+			 "Host":" localhost ",
 			 "Port":6379
 		  }
 	   },
@@ -145,7 +149,7 @@ func TestJson(t *testing.T) {
 		  "Database":{ 
 			 "Host":"mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb",
 			 "Collection":{ 
-				"Name":"dXNlcnM=",
+				"Name":"dXM9ZXJz",
 				"Other":1,
 				"X":97
 			 }
@@ -156,7 +160,7 @@ func TestJson(t *testing.T) {
 	   }
 	}`)
 
-	_, expected := data(t)
+	_, expected := testdata(t)
 
 	actual := Config{}
 	if err := Load(&actual).JSON(input); err != nil {
@@ -230,14 +234,14 @@ func TestWithBoolParseError(t *testing.T) {
 	}
 }
 
-func data(t *testing.T) ([]byte, Config) {
+func testdata(t *testing.T) ([]byte, Config) {
 	input, err := ioutil.ReadFile("testdata/.env")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	expected := Config{
-		String: "string",
+		String: " string\\\" ",
 		A:      1,
 		B:      2,
 		C:      3,
@@ -262,7 +266,7 @@ func data(t *testing.T) ([]byte, Config) {
 				Host string
 				Port int `env:"REDIS_PORT"`
 			}{
-				Host: "localhost",
+				Host: " localhost ",
 				Port: 6379,
 			},
 		},
@@ -293,7 +297,7 @@ func data(t *testing.T) ([]byte, Config) {
 				Other byte   `env:"MONGO_OTHER"`
 				X     rune   `env:"MONGO_X"`
 			}{
-				Name:  []byte("users"),
+				Name:  []byte("us=ers"),
 				Other: 1,
 				X:     'a',
 			},
