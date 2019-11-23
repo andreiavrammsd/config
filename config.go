@@ -29,7 +29,7 @@ func (l *Loader) Env() error {
 }
 
 // EnvFile loads config into struct from environment variables in one or multiple files (dotenv).
-// If not file is passed, the default is ".env".
+// If no file is passed, the default is ".env".
 func (l *Loader) EnvFile(files ...string) error {
 	if err := checkNilStruct(l.i); err != nil {
 		return err
