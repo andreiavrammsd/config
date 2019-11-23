@@ -83,15 +83,25 @@ func TestEnv(t *testing.T) {
 	}
 }
 
+type envFile struct {
+	AAA string
+	Config
+}
+
 func TestEnvFile(t *testing.T) {
-	_, expected, err := testdata()
+	_, ex, err := testdata()
 	if err != nil {
 		t.Fatal(err)
 	}
 	file := "testdata/.env"
 
-	actual := Config{}
-	if err := Load(&actual).EnvFile(file); err != nil {
+	expected := envFile{
+		AAA:    "BBB",
+		Config: ex,
+	}
+
+	actual := envFile{}
+	if err := Load(&actual).EnvFile(file, "testdata/.env2"); err != nil {
 		t.Fatal(err)
 	}
 
