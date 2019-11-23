@@ -12,47 +12,47 @@ func vars(r io.Reader) (map[string]string, error) {
 	reader := bufio.NewReader(r)
 	vars := make(map[string]string)
 
-	var k, v []byte
+	var name, value []byte
 
-	atK := true
-	atV := false
+	atName := true
+	atValue := false
 	atComment := false
 
 	for {
 		r, _, err := reader.ReadRune()
 		if err != nil {
 			if err == io.EOF {
-				if atV {
-					vars[string(bytes.TrimSpace(k))] = string(bytes.Trim(bytes.TrimSpace(v), `"'`))
+				if atValue {
+					vars[varName(name)] = varValue(value)
 				}
 				break
 			}
 
-			return nil, fmt.Errorf("config: cannot read input (%s)", err)
+			return nil, fmt.Errorf("config: cannot read from input (%s)", err)
 		}
 
 		if r == '#' {
-			if atV {
-				vars[string(bytes.TrimSpace(k))] = string(bytes.Trim(bytes.TrimSpace(v), `"'`))
+			if atValue {
+				vars[varName(name)] = varValue(value)
 			}
 
-			k = nil
-			v = nil
+			name = nil
+			value = nil
+			atName = false
+			atValue = false
 			atComment = true
-			atK = false
-			atV = false
 			continue
 		}
 
 		if r == '\n' || r == '\r' {
-			if atV {
-				vars[string(bytes.TrimSpace(k))] = string(bytes.Trim(bytes.TrimSpace(v), `"'`))
+			if atValue {
+				vars[varName(name)] = varValue(value)
 			}
 
-			k = nil
-			v = nil
-			atK = true
-			atV = false
+			name = nil
+			value = nil
+			atName = true
+			atValue = false
 
 			if atComment {
 				atComment = false
@@ -67,26 +67,34 @@ func vars(r io.Reader) (map[string]string, error) {
 		}
 
 		if r == '=' {
-			if atV {
-				v = append(v, byte(r))
+			if atValue {
+				value = append(value, byte(r))
 			}
-			atK = false
-			atV = true
+			atName = false
+			atValue = true
 			continue
 		}
 
-		if atK {
+		if atName {
 			if unicode.IsSpace(r) {
 				continue
 			}
-			k = append(k, byte(r))
+			name = append(name, byte(r))
 			continue
 		}
 
-		if atV {
-			v = append(v, byte(r))
+		if atValue {
+			value = append(value, byte(r))
 		}
 	}
 
 	return vars, nil
+}
+
+func varName(n []byte) string {
+	return string(bytes.TrimSpace(n))
+}
+
+func varValue(v []byte) string {
+	return string(bytes.Trim(bytes.TrimSpace(v), `"'`))
 }

@@ -52,7 +52,10 @@ type Struct struct {
 }
 
 func TestEnv(t *testing.T) {
-	input, expected := testdata(t)
+	input, expected, err := testdata()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	kv, err := vars(bytes.NewReader(input))
 	if err != nil {
@@ -81,7 +84,10 @@ func TestEnv(t *testing.T) {
 }
 
 func TestEnvFile(t *testing.T) {
-	_, expected := testdata(t)
+	_, expected, err := testdata()
+	if err != nil {
+		t.Fatal(err)
+	}
 	file := "testdata/.env"
 
 	actual := Config{}
@@ -95,7 +101,10 @@ func TestEnvFile(t *testing.T) {
 }
 
 func TestBytes(t *testing.T) {
-	input, expected := testdata(t)
+	input, expected, err := testdata()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	actual := Config{}
 	if err := Load(&actual).Bytes(input); err != nil {
@@ -108,7 +117,10 @@ func TestBytes(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	input, expected := testdata(t)
+	input, expected, err := testdata()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	actual := Config{}
 	if err := Load(&actual).String(string(input)); err != nil {
@@ -160,7 +172,10 @@ func TestJson(t *testing.T) {
 	   }
 	}`)
 
-	_, expected := testdata(t)
+	_, expected, err := testdata()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	actual := Config{}
 	if err := Load(&actual).JSON(input); err != nil {
@@ -234,10 +249,26 @@ func TestWithBoolParseError(t *testing.T) {
 	}
 }
 
-func testdata(t *testing.T) ([]byte, Config) {
+// BenchmarkVars-8          1478143               856 ns/op            4144 B/op          2 allocs/op
+func BenchmarkVars(b *testing.B) {
+	input, _, err := testdata()
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	reader := bytes.NewReader(input)
+	for n := 0; n < b.N; n++ {
+		_, err := vars(reader)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func testdata() ([]byte, Config, error) {
 	input, err := ioutil.ReadFile("testdata/.env")
 	if err != nil {
-		t.Fatal(err)
+		return nil, Config{}, err
 	}
 
 	expected := Config{
@@ -304,7 +335,7 @@ func testdata(t *testing.T) ([]byte, Config) {
 		}},
 	}
 
-	return input, expected
+	return input, expected, nil
 }
 
 func TestWithNilStructPassed(t *testing.T) {
