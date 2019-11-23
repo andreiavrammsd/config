@@ -4,8 +4,9 @@ Package config load configuration values into given struct.
 
 The struct must be passed by reference.
 
-Fields can have the `env` tag which defines the key of the value. If no tag provided, the key will be the
-uppercase full path of the field (all the fields names starting the root until current field, joined by underscore).
+Fields must be exported. Unexported fields will be ignored. They can have the `env` tag which defines the key
+of the value. If no tag provided, the key will be the uppercase full path of the field (all the fields names
+starting the root until current field, joined by underscore).
 
 The `json` tag will be used for loading from JSON.
 
