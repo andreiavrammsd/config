@@ -120,8 +120,14 @@ func setFieldValue(field *reflect.StructField, fieldValue reflect.Value, value s
 			return err
 		}
 		fieldValue.SetUint(v)
-	case reflect.Float32, reflect.Float64:
-		v, err := strconv.ParseFloat(value, 0)
+	case reflect.Float32:
+		v, err := strconv.ParseFloat(value, 32)
+		if err != nil {
+			return err
+		}
+		fieldValue.SetFloat(v)
+	case reflect.Float64:
+		v, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return err
 		}

@@ -131,8 +131,8 @@ func TestJson(t *testing.T) {
 	   "UC":3,
 	   "UD":4,
 	   "UE":5,
-	   "F32":1.2,
-	   "F64":2.1,
+	   "F32":15425.2231,
+	   "F64":245232212.9844448,
 	   "IsSet":true,
 	   "Redis":{ 
 		  "Connection":{ 
@@ -194,7 +194,19 @@ func TestWithUintParseError(t *testing.T) {
 	}
 }
 
-func TestWithFloatParseError(t *testing.T) {
+func TestWithFloat32ParseError(t *testing.T) {
+	config := struct {
+		Struct struct {
+			Key float32
+		}
+	}{}
+
+	if err := Load(&config).String(parseErrorInput); err == nil {
+		t.Error("expected parse error")
+	}
+}
+
+func TestWithFloat64ParseError(t *testing.T) {
 	config := struct {
 		Struct struct {
 			Key float64
@@ -237,8 +249,8 @@ func data(t *testing.T) ([]byte, Config) {
 		UC:     3,
 		UD:     4,
 		UE:     5,
-		F32:    1.2,
-		F64:    2.1,
+		F32:    15425.2231,
+		F64:    245232212.9844448,
 		IsSet:  true,
 		Redis: struct {
 			Connection struct {
