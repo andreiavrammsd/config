@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -256,6 +257,24 @@ func TestWithBoolParseError(t *testing.T) {
 
 	if err := Load(&config).String(parseErrorInput); err == nil {
 		t.Error("expected parse error")
+	}
+}
+
+type errReader struct {
+}
+
+func (e *errReader) Read(p []byte) (n int, err error) {
+	err = errors.New("reader error")
+	return
+}
+
+func TestWithParseReaderError(t *testing.T) {
+	v, err := vars(&errReader{})
+	if v != nil {
+		t.Error("expected nil map")
+	}
+	if err == nil {
+		t.Error("expected reader error")
 	}
 }
 
