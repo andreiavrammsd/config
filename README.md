@@ -21,7 +21,7 @@ go get github.com/andreiavrammsd/config
 
 ## Usage
 
-See [tests](./config_test.go).
+See [examples](./examples_test.go) and [tests](./config_test.go).
 
 ## Testing and QA tools for development
 
