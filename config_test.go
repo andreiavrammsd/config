@@ -56,7 +56,7 @@ func TestEnv(t *testing.T) {
 	kv := vars(input)
 	for k, v := range kv {
 		if err := os.Setenv(k, v); err != nil {
-			t.Fatal(err)
+			t.Fatalf(`cannot set env variable "%s" with value "%s": "%s"`, k, v, err)
 		}
 	}
 
@@ -143,7 +143,7 @@ func TestJson(t *testing.T) {
 	   "Timeout":2000000000,
 	   "Mongo":{ 
 		  "Database":{ 
-			 "Host":"127.0.0.1",
+			 "Host":"mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb",
 			 "Collection":{ 
 				"Name":"dXNlcnM=",
 				"Other":1,
@@ -287,7 +287,7 @@ func data(t *testing.T) ([]byte, Config) {
 				X     rune   `env:"MONGO_X"`
 			}
 		}{
-			Host: "127.0.0.1",
+			Host: "mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb",
 			Collection: struct {
 				Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
 				Other byte   `env:"MONGO_OTHER"`
