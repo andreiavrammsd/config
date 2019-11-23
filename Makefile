@@ -1,4 +1,4 @@
-.PHONY: all test lint coverage prepushhook
+.PHONY: all test bench lint coverage prepushhook
 
 COVER_PROFILE=cover.out
 
@@ -8,6 +8,9 @@ GOLINT := $(shell which golint)
 
 test:
 	go test -cover -v ./...
+
+bench:
+	go test -bench=. -benchmem -v -run=Bench ./...
 
 lint:
 ifndef GOLINT

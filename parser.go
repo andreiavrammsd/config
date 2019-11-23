@@ -1,17 +1,12 @@
 package config
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 )
-
-const keyValuePattern = `(.+)=(.+)`
 
 type getValue func(string) string
 
@@ -70,22 +65,6 @@ func parse(typ reflect.Type, val reflect.Value, getValue getValue, path string) 
 	return nil
 }
 
-func vars(input []byte) map[string]string {
-	r := regexp.MustCompile(keyValuePattern)
-	vars := make(map[string]string)
-
-	scanner := bufio.NewScanner(bytes.NewReader(input))
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		m := r.FindSubmatch(line)
-		if len(m) > 2 {
-			vars[string(bytes.TrimSpace(m[1]))] = string(bytes.TrimSpace(m[2]))
-		}
-	}
-
-	return vars
-}
-
 func value(field *reflect.StructField, getValue getValue, path string) string {
 	value := getValue(key(field, path))
 	if value == "" {
@@ -120,8 +99,14 @@ func setFieldValue(field *reflect.StructField, fieldValue reflect.Value, value s
 			return err
 		}
 		fieldValue.SetUint(v)
-	case reflect.Float32, reflect.Float64:
-		v, err := strconv.ParseFloat(value, 0)
+	case reflect.Float32:
+		v, err := strconv.ParseFloat(value, 32)
+		if err != nil {
+			return err
+		}
+		fieldValue.SetFloat(v)
+	case reflect.Float64:
+		v, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return err
 		}

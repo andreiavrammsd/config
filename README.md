@@ -9,6 +9,32 @@ uppercase full path of the field (all the fields names starting the root until c
 
 The `json` tag will be used for loading from JSON.
 
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/andreiavrammsd/config"
+)
+
+type Config struct {
+	Username string `env:"USERNAME"`
+}
+
+func main() {
+	input := []byte(`USERNAME=msd # username`)
+
+	cfg := Config{}
+	if err := config.Load(&cfg).Bytes(input); err != nil {
+		log.Fatalf("cannot load config: %s", err)
+	}
+
+	fmt.Println(cfg.Username)
+}
+```
+
 ## Docs
 
 [![GoDoc](https://godoc.org/github.com/andreiavrammsd/config?status.svg)](https://godoc.org/github.com/andreiavrammsd/config)
@@ -21,7 +47,7 @@ go get github.com/andreiavrammsd/config
 
 ## Usage
 
-See [tests](./config_test.go).
+See [examples](./examples_test.go) and [tests](./config_test.go).
 
 ## Testing and QA tools for development
 

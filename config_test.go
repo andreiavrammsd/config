@@ -1,7 +1,9 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -51,12 +53,18 @@ type Struct struct {
 }
 
 func TestEnv(t *testing.T) {
-	input, expected := data(t)
+	input, expected, err := testdata()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	kv := vars(input)
+	kv, err := vars(bytes.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
 	for k, v := range kv {
 		if err := os.Setenv(k, v); err != nil {
-			t.Fatal(err)
+			t.Fatalf(`cannot set env variable "%s" with value "%s": "%s"`, k, v, err)
 		}
 	}
 
@@ -76,12 +84,25 @@ func TestEnv(t *testing.T) {
 	}
 }
 
+type envFile struct {
+	AAA string
+	Config
+}
+
 func TestEnvFile(t *testing.T) {
-	_, expected := data(t)
+	_, ex, err := testdata()
+	if err != nil {
+		t.Fatal(err)
+	}
 	file := "testdata/.env"
 
-	actual := Config{}
-	if err := Load(&actual).EnvFile(file); err != nil {
+	expected := envFile{
+		AAA:    "BBB",
+		Config: ex,
+	}
+
+	actual := envFile{}
+	if err := Load(&actual).EnvFile(file, "testdata/.env2"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -91,7 +112,10 @@ func TestEnvFile(t *testing.T) {
 }
 
 func TestBytes(t *testing.T) {
-	input, expected := data(t)
+	input, expected, err := testdata()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	actual := Config{}
 	if err := Load(&actual).Bytes(input); err != nil {
@@ -104,7 +128,10 @@ func TestBytes(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	input, expected := data(t)
+	input, expected, err := testdata()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	actual := Config{}
 	if err := Load(&actual).String(string(input)); err != nil {
@@ -119,7 +146,7 @@ func TestString(t *testing.T) {
 func TestJson(t *testing.T) {
 	input := json.RawMessage(`{ 
 	   "StructPtr":null,
-	   "String":"string",
+	   "String":" string\\\" ",
 	   "A":1,
 	   "B":2,
 	   "C":3,
@@ -131,21 +158,21 @@ func TestJson(t *testing.T) {
 	   "UC":3,
 	   "UD":4,
 	   "UE":5,
-	   "F32":1.2,
-	   "F64":2.1,
+	   "F32":15425.2231,
+	   "F64":245232212.9844448,
 	   "IsSet":true,
 	   "Redis":{ 
 		  "Connection":{ 
-			 "Host":"localhost",
+			 "Host":" localhost ",
 			 "Port":6379
 		  }
 	   },
 	   "Timeout":2000000000,
 	   "Mongo":{ 
 		  "Database":{ 
-			 "Host":"127.0.0.1",
+			 "Host":"mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb",
 			 "Collection":{ 
-				"Name":"dXNlcnM=",
+				"Name":"dXM9ZXJz",
 				"Other":1,
 				"X":97
 			 }
@@ -156,7 +183,10 @@ func TestJson(t *testing.T) {
 	   }
 	}`)
 
-	_, expected := data(t)
+	_, expected, err := testdata()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	actual := Config{}
 	if err := Load(&actual).JSON(input); err != nil {
@@ -194,7 +224,19 @@ func TestWithUintParseError(t *testing.T) {
 	}
 }
 
-func TestWithFloatParseError(t *testing.T) {
+func TestWithFloat32ParseError(t *testing.T) {
+	config := struct {
+		Struct struct {
+			Key float32
+		}
+	}{}
+
+	if err := Load(&config).String(parseErrorInput); err == nil {
+		t.Error("expected parse error")
+	}
+}
+
+func TestWithFloat64ParseError(t *testing.T) {
 	config := struct {
 		Struct struct {
 			Key float64
@@ -218,14 +260,48 @@ func TestWithBoolParseError(t *testing.T) {
 	}
 }
 
-func data(t *testing.T) ([]byte, Config) {
+type errReader struct {
+}
+
+func (e *errReader) Read(p []byte) (n int, err error) {
+	err = errors.New("reader error")
+	return
+}
+
+func TestWithParseReaderError(t *testing.T) {
+	v, err := vars(&errReader{})
+	if v != nil {
+		t.Error("expected nil map")
+	}
+	if err == nil {
+		t.Error("expected reader error")
+	}
+}
+
+// BenchmarkVars-8          1478143               856 ns/op            4144 B/op          2 allocs/op
+func BenchmarkVars(b *testing.B) {
+	input, _, err := testdata()
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	reader := bytes.NewReader(input)
+	for n := 0; n < b.N; n++ {
+		_, err := vars(reader)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func testdata() ([]byte, Config, error) {
 	input, err := ioutil.ReadFile("testdata/.env")
 	if err != nil {
-		t.Fatal(err)
+		return nil, Config{}, err
 	}
 
 	expected := Config{
-		String: "string",
+		String: " string\\\" ",
 		A:      1,
 		B:      2,
 		C:      3,
@@ -237,8 +313,8 @@ func data(t *testing.T) ([]byte, Config) {
 		UC:     3,
 		UD:     4,
 		UE:     5,
-		F32:    1.2,
-		F64:    2.1,
+		F32:    15425.2231,
+		F64:    245232212.9844448,
 		IsSet:  true,
 		Redis: struct {
 			Connection struct {
@@ -250,7 +326,7 @@ func data(t *testing.T) ([]byte, Config) {
 				Host string
 				Port int `env:"REDIS_PORT"`
 			}{
-				Host: "localhost",
+				Host: " localhost ",
 				Port: 6379,
 			},
 		},
@@ -275,20 +351,20 @@ func data(t *testing.T) ([]byte, Config) {
 				X     rune   `env:"MONGO_X"`
 			}
 		}{
-			Host: "127.0.0.1",
+			Host: "mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb",
 			Collection: struct {
 				Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
 				Other byte   `env:"MONGO_OTHER"`
 				X     rune   `env:"MONGO_X"`
 			}{
-				Name:  []byte("users"),
+				Name:  []byte("us=ers"),
 				Other: 1,
 				X:     'a',
 			},
 		}},
 	}
 
-	return input, expected
+	return input, expected, nil
 }
 
 func TestWithNilStructPassed(t *testing.T) {
