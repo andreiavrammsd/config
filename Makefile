@@ -1,6 +1,7 @@
 .PHONY: all test bench lint coverage prepushhook
 
 COVER_PROFILE=cover.out
+GO111MODULE=on
 
 all: test lint
 
@@ -14,7 +15,7 @@ bench:
 
 lint:
 ifndef GOLINT
-		go get -u golang.org/x/lint/golint
+		GO111MODULE=off && go get -u golang.org/x/lint/golint
 endif
 	golint -set_exit_status ./...
 
