@@ -116,8 +116,8 @@ func checkNilStruct(i interface{}) error {
 
 func fromBytes(i interface{}, input []byte) error {
 	vars := make(map[string]string)
-	err := parseVars(bytes.NewReader(input), vars)
-	if err != nil {
+
+	if err := parseVars(bytes.NewReader(input), vars); err != nil {
 		return err
 	}
 

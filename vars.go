@@ -22,7 +22,7 @@ func parseVars(r io.Reader, vars map[string]string) error {
 		if err != nil {
 			if err == io.EOF {
 				if atValue {
-					vars[varName(name)] = varValue(value)
+					vars[string(name)] = varValue(value)
 				}
 				break
 			}
@@ -32,7 +32,7 @@ func parseVars(r io.Reader, vars map[string]string) error {
 
 		if r == '#' {
 			if atValue {
-				vars[varName(name)] = varValue(value)
+				vars[string(name)] = varValue(value)
 			}
 
 			name = nil
@@ -45,7 +45,7 @@ func parseVars(r io.Reader, vars map[string]string) error {
 
 		if r == '\n' || r == '\r' {
 			if atValue {
-				vars[varName(name)] = varValue(value)
+				vars[string(name)] = varValue(value)
 			}
 
 			name = nil
@@ -88,10 +88,6 @@ func parseVars(r io.Reader, vars map[string]string) error {
 	}
 
 	return nil
-}
-
-func varName(n []byte) string {
-	return string(bytes.TrimSpace(n))
 }
 
 func varValue(v []byte) string {
