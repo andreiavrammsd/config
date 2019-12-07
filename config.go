@@ -10,8 +10,10 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -21,6 +23,11 @@ const dotEnvFile = ".env"
 // Loader provides methods to load configuration values into a struct
 type Loader struct {
 	i interface{}
+}
+
+// Load creates a Loader with given struct
+func Load(i interface{}) *Loader {
+	return &Loader{i: i}
 }
 
 // Env loads config into struct from environment variables
@@ -43,7 +50,33 @@ func (l *Loader) EnvFile(files ...string) error {
 		files = append(files, dotEnvFile)
 	}
 
-	return fromEnvFile(l.i, files...)
+	vars := make(map[string]string)
+
+	for i := 0; i < len(files); i++ {
+		f, err := os.Open(files[i])
+		if err != nil {
+			return fmt.Errorf("config: %s", err)
+		}
+
+		err = parseVars(f, vars)
+
+		if err != nil {
+			if e := f.Close(); e != nil {
+				return fmt.Errorf("config: %s", e)
+			}
+			return fmt.Errorf("config: %s", err)
+		}
+
+		if err = f.Close(); err != nil {
+			return fmt.Errorf("config: %s", err)
+		}
+	}
+
+	f := func(s string) string {
+		return vars[s]
+	}
+
+	return parseIntoStruct(l.i, f)
 }
 
 // Bytes loads config into struct from byte array
@@ -81,7 +114,16 @@ func checkNilStruct(i interface{}) error {
 	return nil
 }
 
-// Load creates a Loader with given struct
-func Load(i interface{}) *Loader {
-	return &Loader{i: i}
+func fromBytes(i interface{}, input []byte) error {
+	vars := make(map[string]string)
+	err := parseVars(bytes.NewReader(input), vars)
+	if err != nil {
+		return err
+	}
+
+	f := func(s string) string {
+		return vars[s]
+	}
+
+	return parseIntoStruct(i, f)
 }

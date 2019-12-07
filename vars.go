@@ -8,9 +8,8 @@ import (
 	"unicode"
 )
 
-func vars(r io.Reader) (map[string]string, error) {
+func parseVars(r io.Reader, vars map[string]string) error {
 	reader := bufio.NewReader(r)
-	vars := make(map[string]string)
 
 	var name, value []byte
 
@@ -28,7 +27,7 @@ func vars(r io.Reader) (map[string]string, error) {
 				break
 			}
 
-			return nil, fmt.Errorf("config: cannot read from input (%s)", err)
+			return fmt.Errorf("config: cannot read from input (%s)", err)
 		}
 
 		if r == '#' {
@@ -88,7 +87,7 @@ func vars(r io.Reader) (map[string]string, error) {
 		}
 	}
 
-	return vars, nil
+	return nil
 }
 
 func varName(n []byte) string {
