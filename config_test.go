@@ -28,24 +28,25 @@ type Config struct {
 			Port int `env:"REDIS_PORT"`
 		}
 	}
-	String    string `env:"ABC"`
-	Struct    Struct
-	StructPtr *Struct
-	D         int64
-	E         int
-	ENeg      int `env:"E_NEG"`
-	UD        uint64
-	UE        uint
-	F64       float64
-	Timeout   time.Duration
-	C         int32
-	UC        uint32
-	F32       float32
-	B         int16
-	UB        uint16
-	A         int8
-	UA        uint8
-	IsSet     bool
+	String       string `env:"ABC"`
+	Struct       Struct
+	StructPtr    *Struct
+	D            int64
+	E            int
+	ENeg         int `env:"E_NEG"`
+	UD           uint64
+	UE           uint
+	F64          float64
+	Timeout      time.Duration
+	C            int32
+	UC           uint32
+	F32          float32
+	B            int16
+	UB           uint16
+	A            int8
+	UA           uint8
+	IsSet        bool
+	Interpolated string
 }
 
 type Struct struct {
@@ -63,6 +64,7 @@ func TestEnv(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	interpolateVars(vars)
 
 	for k, v := range vars {
 		if err := os.Setenv(k, v); err != nil {
@@ -182,7 +184,8 @@ func TestJson(t *testing.T) {
 	   },
 	   "Struct":{
 		  "Field":"Value"
-	   }
+	   },
+	   "Interpolated":"$B env_1 $ $B \\3"
 	}`)
 
 	_, expected, err := testdata()
@@ -281,9 +284,10 @@ func TestWithParseReaderError(t *testing.T) {
 	}
 }
 
-// BenchmarkVars-8          1663723               749 ns/op            4096 B/op          1 allocs/op
-func BenchmarkVars(b *testing.B) {
+// Benchmark_parseVars-8            1663723               749 ns/op            4096 B/op          1 allocs/op
+func Benchmark_parseVars(b *testing.B) {
 	b.ReportAllocs()
+
 	input, _, err := testdata()
 	if err != nil {
 		b.Fatal(err)
@@ -367,6 +371,7 @@ func testdata() ([]byte, Config, error) {
 				X:     'a',
 			},
 		}},
+		Interpolated: "$B env_1 $ $B \\3",
 	}
 
 	return input, expected, nil

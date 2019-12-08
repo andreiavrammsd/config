@@ -72,6 +72,8 @@ func (l *Loader) EnvFile(files ...string) error {
 		}
 	}
 
+	interpolateVars(vars)
+
 	f := func(s string) string {
 		return vars[s]
 	}
@@ -120,6 +122,8 @@ func fromBytes(i interface{}, input []byte) error {
 	if err := parseVars(bytes.NewReader(input), vars); err != nil {
 		return err
 	}
+
+	interpolateVars(vars)
 
 	f := func(s string) string {
 		return vars[s]
