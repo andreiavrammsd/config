@@ -28,24 +28,25 @@ type Config struct {
 			Port int `env:"REDIS_PORT"`
 		}
 	}
-	String    string `env:"ABC"`
-	Struct    Struct
-	StructPtr *Struct
-	D         int64
-	E         int
-	ENeg      int `env:"E_NEG"`
-	UD        uint64
-	UE        uint
-	F64       float64
-	Timeout   time.Duration
-	C         int32
-	UC        uint32
-	F32       float32
-	B         int16
-	UB        uint16
-	A         int8
-	UA        uint8
-	IsSet     bool
+	String       string `env:"ABC"`
+	Struct       Struct
+	StructPtr    *Struct
+	D            int64
+	E            int
+	ENeg         int `env:"E_NEG"`
+	UD           uint64
+	UE           uint
+	F64          float64
+	Timeout      time.Duration
+	C            int32
+	UC           uint32
+	F32          float32
+	B            int16
+	UB           uint16
+	A            int8
+	UA           uint8
+	IsSet        bool
+	Interpolated string
 }
 
 type Struct struct {
@@ -58,11 +59,14 @@ func TestEnv(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	kv, err := vars(bytes.NewReader(input))
+	vars := make(map[string]string)
+	err = parseVars(bytes.NewReader(input), vars)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for k, v := range kv {
+	interpolateVars(vars)
+
+	for k, v := range vars {
 		if err := os.Setenv(k, v); err != nil {
 			t.Fatalf(`cannot set env variable "%s" with value "%s": "%s"`, k, v, err)
 		}
@@ -77,7 +81,7 @@ func TestEnv(t *testing.T) {
 		t.Errorf("\nhave: %v\nwant: %v", actual, expected)
 	}
 
-	for k := range kv {
+	for k := range vars {
 		if err := os.Unsetenv(k); err != nil {
 			t.Fatal(err)
 		}
@@ -144,7 +148,7 @@ func TestString(t *testing.T) {
 }
 
 func TestJson(t *testing.T) {
-	input := json.RawMessage(`{ 
+	input := json.RawMessage(`{
 	   "StructPtr":null,
 	   "String":" string\\\" ",
 	   "A":1,
@@ -161,26 +165,27 @@ func TestJson(t *testing.T) {
 	   "F32":15425.2231,
 	   "F64":245232212.9844448,
 	   "IsSet":true,
-	   "Redis":{ 
-		  "Connection":{ 
+	   "Redis":{
+		  "Connection":{
 			 "Host":" localhost ",
 			 "Port":6379
 		  }
 	   },
 	   "Timeout":2000000000,
-	   "Mongo":{ 
-		  "Database":{ 
+	   "Mongo":{
+		  "Database":{
 			 "Host":"mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb",
-			 "Collection":{ 
+			 "Collection":{
 				"Name":"dXM9ZXJz",
 				"Other":1,
 				"X":97
 			 }
 		  }
 	   },
-	   "Struct":{ 
+	   "Struct":{
 		  "Field":"Value"
-	   }
+	   },
+	   "Interpolated":"$B env_1 $ $B \\3 6379 + $"
 	}`)
 
 	_, expected, err := testdata()
@@ -269,25 +274,29 @@ func (e *errReader) Read(p []byte) (n int, err error) {
 }
 
 func TestWithParseReaderError(t *testing.T) {
-	v, err := vars(&errReader{})
-	if v != nil {
-		t.Error("expected nil map")
+	kv := make(map[string]string)
+	err := parseVars(&errReader{}, kv)
+	if len(kv) > 0 {
+		t.Error("expected empty map")
 	}
 	if err == nil {
 		t.Error("expected reader error")
 	}
 }
 
-// BenchmarkVars-8          1478143               856 ns/op            4144 B/op          2 allocs/op
-func BenchmarkVars(b *testing.B) {
+// Benchmark_parseVars-8            1663723               749 ns/op            4096 B/op          1 allocs/op
+func Benchmark_parseVars(b *testing.B) {
+	b.ReportAllocs()
+
 	input, _, err := testdata()
 	if err != nil {
 		b.Fatal(err)
 	}
 
+	vars := make(map[string]string)
 	reader := bytes.NewReader(input)
 	for n := 0; n < b.N; n++ {
-		_, err := vars(reader)
+		err := parseVars(reader, vars)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -362,6 +371,7 @@ func testdata() ([]byte, Config, error) {
 				X:     'a',
 			},
 		}},
+		Interpolated: "$B env_1 $ $B \\3 6379 + $",
 	}
 
 	return input, expected, nil

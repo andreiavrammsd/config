@@ -5,26 +5,23 @@ GO111MODULE=on
 
 all: test lint
 
-GOLINT := $(shell which golint)
-
 test:
 	go test -cover -v ./...
 
 bench:
 	go test -bench=. -benchmem -v -run=Bench ./...
 
-lint:
-ifndef GOLINT
-		GO111MODULE=off && go get -u golang.org/x/lint/golint
-endif
+lint: check-lint
 	golint -set_exit_status ./...
-
-	@[ ! -f ./bin/golangci-lint ] && curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh \
-		| sh -s -- -b ./bin v1.21.0 || true
-	./bin/golangci-lint run
+	golangci-lint run
 
 coverage:
 	go test -v -coverprofile $(COVER_PROFILE) ./... && go tool cover -html=$(COVER_PROFILE)
 
 prepushhook:
 	echo '#!/bin/sh\n\nmake' > .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+
+check-lint:
+	@[ $(shell which golint) ] || (GO111MODULE=off && go get -u golang.org/x/lint/golint)
+	@[ $(shell which golangci-lint) ] || curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh \
+		| sh -s -- -b $(shell go env GOPATH)/bin v1.21.0
