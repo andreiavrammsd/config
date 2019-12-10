@@ -120,14 +120,12 @@ func interpolateVars(vars map[string]string) {
 			}
 
 			if !atVar {
-				// Next variable is double escaped
-				if v[i] == '\\' && i+1 < len(v) && v[i+1] == '\\' && i+2 < len(v) && v[i+2] == '$' {
+				if nextVarIsDoubleEscaped(v, i) {
 					newValue = append(newValue, v[i])
 					continue
 				}
 
-				// Next variable is escaped
-				if v[i] == '\\' && i+1 < len(v) && v[i+1] == '$' {
+				if nextVarIsEscaped(v, i) {
 					continue
 				}
 
@@ -176,4 +174,12 @@ func isAtVar(v string, i int) bool {
 	}
 
 	return atVar
+}
+
+func nextVarIsDoubleEscaped(v string, i int) bool {
+	return v[i] == '\\' && i+1 < len(v) && v[i+1] == '\\' && i+2 < len(v) && v[i+2] == '$'
+}
+
+func nextVarIsEscaped(v string, i int) bool {
+	return v[i] == '\\' && i+1 < len(v) && v[i+1] == '$'
 }
