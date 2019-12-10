@@ -108,20 +108,10 @@ func interpolateVars(vars map[string]string) {
 		for i := 0; i < len(v); i++ {
 			// Variable starts
 			if v[i] == '$' {
-				atVar = true
+				atVar = isAtVar(v, i)
 
-				// Variable is escaped
-				if i-1 >= 0 && v[i-1] == '\\' {
-					atVar = false
-				}
-
-				// Variable is double escaped
-				if i-2 > 0 && v[i-2] == '\\' {
-					atVar = true
-				}
-
-				if i+1 < len(v) && (unicode.IsSpace(rune(v[i+1])) || v[i+1] == '"' || v[i+1] == '\'') {
-					atVar = false
+				if i == len(v)-1 && i-1 >= 0 && v[i-1] != '\\' {
+					newValue = append(newValue, v[i])
 				}
 
 				if atVar {
@@ -145,6 +135,10 @@ func interpolateVars(vars map[string]string) {
 				continue
 			}
 
+			if atVar && (v[i] == '{' || v[i] == '}') {
+				continue
+			}
+
 			if unicode.IsSpace(rune(v[i])) {
 				newValue = append(newValue, []byte(vars[string(name)])...)
 				newValue = append(newValue, v[i])
@@ -162,4 +156,24 @@ func interpolateVars(vars map[string]string) {
 
 		vars[k] = string(newValue)
 	}
+}
+
+func isAtVar(v string, i int) bool {
+	atVar := true
+
+	// Variable is escaped
+	if i-1 >= 0 && v[i-1] == '\\' {
+		atVar = false
+	}
+
+	// Variable is double escaped
+	if i-2 > 0 && v[i-2] == '\\' {
+		atVar = true
+	}
+
+	if i+1 < len(v) && (unicode.IsSpace(rune(v[i+1])) || v[i+1] == '"' || v[i+1] == '\'') {
+		atVar = false
+	}
+
+	return atVar
 }

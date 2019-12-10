@@ -185,7 +185,7 @@ func TestJson(t *testing.T) {
 	   "Struct":{
 		  "Field":"Value"
 	   },
-	   "Interpolated":"$B env_1 $ $B \\3"
+	   "Interpolated":"$B env_1 $ $B \\3 6379 + $"
 	}`)
 
 	_, expected, err := testdata()
@@ -371,7 +371,7 @@ func testdata() ([]byte, Config, error) {
 				X:     'a',
 			},
 		}},
-		Interpolated: "$B env_1 $ $B \\3",
+		Interpolated: "$B env_1 $ $B \\3 6379 + $",
 	}
 
 	return input, expected, nil
