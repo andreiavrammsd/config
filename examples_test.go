@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	Username string `env:"USERNAME"`
+	Tag      string `env:"TAG" default:"none"`
 }
 
 func ExampleLoader_Env() {
@@ -23,9 +24,11 @@ func ExampleLoader_Env() {
 	}
 
 	fmt.Println(cfg.Username)
+	fmt.Println(cfg.Tag)
 
 	// Output:
 	// msd
+	// none
 }
 
 func ExampleLoader_Bytes() {

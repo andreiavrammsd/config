@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+const (
+	tag             = "env"
+	defaultValueTag = "default"
+)
+
 type getValue func(string) string
 
 func parseIntoStruct(i interface{}, data getValue) error {
@@ -52,6 +57,10 @@ func parse(typ reflect.Type, val reflect.Value, getValue getValue, path string) 
 		value := value(&field, getValue, path)
 
 		if value == "" {
+			value = defaultValue(&field)
+		}
+
+		if value == "" {
 			continue
 		}
 		path = ""
@@ -79,6 +88,10 @@ func key(field *reflect.StructField, path string) string {
 		key = strings.ToUpper(strings.TrimSuffix(path, "_"))
 	}
 	return key
+}
+
+func defaultValue(field *reflect.StructField) string {
+	return field.Tag.Get(defaultValueTag)
 }
 
 func setFieldValue(field *reflect.StructField, fieldValue reflect.Value, value string) error {

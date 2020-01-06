@@ -22,6 +22,7 @@ import (
 
 type Config struct {
 	Username string `env:"USERNAME"`
+	Tag      string `env:"TAG" default:"none"`
 }
 
 func main() {
@@ -33,6 +34,7 @@ func main() {
 	}
 
 	fmt.Println(cfg.Username)
+	fmt.Println(cfg.Tag)
 }
 ```
 

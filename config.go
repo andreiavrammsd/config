@@ -17,7 +17,6 @@ import (
 	"os"
 )
 
-const tag = "env"
 const dotEnvFile = ".env"
 
 // Loader provides methods to load configuration values into a struct

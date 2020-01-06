@@ -28,7 +28,7 @@ type Config struct {
 			Port int `env:"REDIS_PORT"`
 		}
 	}
-	String       string `env:"ABC"`
+	String       string `env:"ABC" default:"ignored"`
 	Struct       Struct
 	StructPtr    *Struct
 	D            int64
@@ -47,6 +47,7 @@ type Config struct {
 	UA           uint8
 	IsSet        bool
 	Interpolated string
+	Default      string `default:"default value"`
 }
 
 type Struct struct {
@@ -185,7 +186,8 @@ func TestJson(t *testing.T) {
 	   "Struct":{
 		  "Field":"Value"
 	   },
-	   "Interpolated":"$B env_1 $ $B \\3 6379 + $"
+	   "Interpolated":"$B env_1 $ $B \\3 6379 + $",
+	   "Default":"default value"
 	}`)
 
 	_, expected, err := testdata()
@@ -372,6 +374,7 @@ func testdata() ([]byte, Config, error) {
 			},
 		}},
 		Interpolated: "$B env_1 $ $B \\3 6379 + $",
+		Default:      "default value",
 	}
 
 	return input, expected, nil
