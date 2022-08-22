@@ -22,4 +22,4 @@ prepushhook:
 
 check-lint:
 	@[ $(shell which golangci-lint) ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
-		| sh -s -- -b $(shell go env GOPATH)/bin v1.46.2
+		| sh -s -- -b $(shell go env GOPATH)/bin v1.48.0
