@@ -1,5 +1,7 @@
 # Config
 
+[![codecov](https://codecov.io/github/andreiavrammsd/config/branch/master/graph/badge.svg?token=4BV8YNIIIX)](https://codecov.io/github/andreiavrammsd/config)
+
 Package config load configuration values into given struct.
 
 The struct must be passed by reference.
