@@ -33,4 +33,10 @@ jobs:
         go-version: ${{ matrix.config.version }}
 
     - name: Test
-      run: make
+      run: make coverage lint
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: coverage.txt
+        token: ${{secrets.CODECOV_TOKEN}}
