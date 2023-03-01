@@ -1,6 +1,6 @@
 .PHONY: all test bench lint coverage prepushhook
 
-COVER_PROFILE=cover.out
+COVER_PROFILE=coverage.txt
 GO111MODULE=on
 
 all: test lint
@@ -15,7 +15,7 @@ lint: check-lint
 	golangci-lint run
 
 coverage:
-	go test -v -coverprofile $(COVER_PROFILE) ./... && go tool cover -html=$(COVER_PROFILE)
+	go test -v -coverprofile=$(COVER_PROFILE) -covermode=atomic ./... && go tool cover -html=$(COVER_PROFILE)
 
 prepushhook:
 	echo '#!/bin/sh\n\nmake' > .git/hooks/pre-push && chmod +x .git/hooks/pre-push
