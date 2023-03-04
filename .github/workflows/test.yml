@@ -11,6 +11,7 @@ on:
 jobs:
 
   build:
+    name: ${{ matrix.config.name }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -18,9 +19,11 @@ jobs:
       matrix:
         config:
           - {
+            name: "Go 1.12.x",
             version: "1.12.x",
           }
           - {
+            name: "Go 1.x",
             version: "1.x",
           }
 
