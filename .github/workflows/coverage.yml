@@ -1,16 +1,15 @@
-name: Test
+name: Coverage
 
 on:
   push:
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
-  schedule:
-    - cron: '0 18 1 * *'
 
 jobs:
 
   build:
+    name: ${{ matrix.config.name }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -18,9 +17,7 @@ jobs:
       matrix:
         config:
           - {
-            version: "1.12.x",
-          }
-          - {
+            name: "Go 1.x",
             version: "1.x",
           }
 
@@ -32,8 +29,8 @@ jobs:
       with:
         go-version: ${{ matrix.config.version }}
 
-    - name: Test
-      run: make coverage lint
+    - name: Coverage
+      run: make coverage
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
