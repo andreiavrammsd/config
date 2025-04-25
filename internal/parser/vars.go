@@ -1,4 +1,4 @@
-package config
+package parser
 
 import (
 	"bufio"
@@ -9,7 +9,7 @@ import (
 	"unicode"
 )
 
-func parseVars(r io.Reader, vars map[string]string) error {
+func ParseVars(r io.Reader, vars map[string]string) error {
 	reader := bufio.NewReader(r)
 
 	var name, value []byte
@@ -95,7 +95,7 @@ func varValue(v []byte) string {
 	return string(bytes.Trim(bytes.TrimSpace(v), `"'`))
 }
 
-func interpolateVars(vars map[string]string) {
+func InterpolateVars(vars map[string]string) {
 	for k, v := range vars {
 		if strings.IndexByte(v, '$') == -1 {
 			continue
@@ -156,8 +156,8 @@ func interpolateVars(vars map[string]string) {
 	}
 }
 
-func isAtVar(v string, i int) bool {
-	atVar := true
+func isAtVar(v string, i int) (atVar bool) {
+	atVar = true
 
 	// Variable is escaped
 	if i-1 >= 0 && v[i-1] == '\\' {
@@ -173,7 +173,7 @@ func isAtVar(v string, i int) bool {
 		atVar = false
 	}
 
-	return atVar
+	return
 }
 
 func nextVarIsDoubleEscaped(v string, i int) bool {

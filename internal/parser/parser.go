@@ -1,4 +1,4 @@
-package config
+package parser
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ const (
 
 type getValue func(string) string
 
-func parseIntoStruct(i interface{}, data getValue) error {
+func ParseIntoStruct(i interface{}, data getValue) error {
 	typ := reflect.TypeOf(i)
 
 	if typ.Kind() != reflect.Ptr {

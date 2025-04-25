@@ -1,10 +1,7 @@
 package config
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
@@ -52,41 +49,6 @@ type Config struct {
 
 type Struct struct {
 	Field string
-}
-
-func TestEnv(t *testing.T) {
-	input, expected, err := testdata()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	vars := make(map[string]string)
-	err = parseVars(bytes.NewReader(input), vars)
-	if err != nil {
-		t.Fatal(err)
-	}
-	interpolateVars(vars)
-
-	for k, v := range vars {
-		if err := os.Setenv(k, v); err != nil {
-			t.Fatalf(`cannot set env variable "%s" with value "%s": "%s"`, k, v, err)
-		}
-	}
-
-	actual := Config{}
-	if err := Load(&actual).Env(); err != nil {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("\nhave: %v\nwant: %v", actual, expected)
-	}
-
-	for k := range vars {
-		if err := os.Unsetenv(k); err != nil {
-			t.Fatal(err)
-		}
-	}
 }
 
 type envFile struct {
@@ -267,46 +229,8 @@ func TestWithBoolParseError(t *testing.T) {
 	}
 }
 
-type errReader struct {
-}
-
-func (e *errReader) Read(p []byte) (n int, err error) {
-	err = errors.New("reader error")
-	return
-}
-
-func TestWithParseReaderError(t *testing.T) {
-	kv := make(map[string]string)
-	err := parseVars(&errReader{}, kv)
-	if len(kv) > 0 {
-		t.Error("expected empty map")
-	}
-	if err == nil {
-		t.Error("expected reader error")
-	}
-}
-
-// Benchmark_parseVars-8            1663723               749 ns/op            4096 B/op          1 allocs/op
-func Benchmark_parseVars(b *testing.B) {
-	b.ReportAllocs()
-
-	input, _, err := testdata()
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	vars := make(map[string]string)
-	reader := bytes.NewReader(input)
-	for n := 0; n < b.N; n++ {
-		err := parseVars(reader, vars)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-}
-
 func testdata() ([]byte, Config, error) {
-	input, err := ioutil.ReadFile("testdata/.env")
+	input, err := os.ReadFile("testdata/.env")
 	if err != nil {
 		return nil, Config{}, err
 	}

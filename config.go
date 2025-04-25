@@ -15,6 +15,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	"github.com/andreiavrammsd/config/internal/parser"
 )
 
 const dotEnvFile = ".env"
@@ -35,7 +37,7 @@ func (l *Loader) Env() error {
 		return err
 	}
 
-	return parseIntoStruct(l.i, os.Getenv)
+	return parser.ParseIntoStruct(l.i, os.Getenv)
 }
 
 // EnvFile loads config into struct from environment variables in one or multiple files (dotenv).
@@ -57,7 +59,7 @@ func (l *Loader) EnvFile(files ...string) error {
 			return fmt.Errorf("config: %s", err)
 		}
 
-		err = parseVars(f, vars)
+		err = parser.ParseVars(f, vars)
 
 		if err != nil {
 			if e := f.Close(); e != nil {
@@ -71,13 +73,13 @@ func (l *Loader) EnvFile(files ...string) error {
 		}
 	}
 
-	interpolateVars(vars)
+	parser.InterpolateVars(vars)
 
 	f := func(s string) string {
 		return vars[s]
 	}
 
-	return parseIntoStruct(l.i, f)
+	return parser.ParseIntoStruct(l.i, f)
 }
 
 // Bytes loads config into struct from byte array
@@ -118,15 +120,15 @@ func checkNilStruct(i interface{}) error {
 func fromBytes(i interface{}, input []byte) error {
 	vars := make(map[string]string)
 
-	if err := parseVars(bytes.NewReader(input), vars); err != nil {
+	if err := parser.ParseVars(bytes.NewReader(input), vars); err != nil {
 		return err
 	}
 
-	interpolateVars(vars)
+	parser.InterpolateVars(vars)
 
 	f := func(s string) string {
 		return vars[s]
 	}
 
-	return parseIntoStruct(i, f)
+	return parser.ParseIntoStruct(i, f)
 }
