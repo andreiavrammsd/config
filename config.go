@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/andreiavrammsd/config/internal/converter"
 	"github.com/andreiavrammsd/config/internal/parser"
 )
 
@@ -31,7 +32,7 @@ func Load[T any](i T) *Loader[T] {
 
 // Env loads config into struct from environment variables
 func (l *Loader[T]) Env() error {
-	return parser.ParseIntoStruct(l.i, os.Getenv)
+	return converter.ConvertIntoStruct(l.i, os.Getenv)
 }
 
 // EnvFile loads config into struct from environment variables in one or multiple files (dotenv).
@@ -69,7 +70,7 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 		return vars[s]
 	}
 
-	return parser.ParseIntoStruct(l.i, f)
+	return converter.ConvertIntoStruct(l.i, f)
 }
 
 // Bytes loads config into struct from byte array
@@ -100,5 +101,5 @@ func fromBytes[T any](i T, input []byte) error {
 		return vars[s]
 	}
 
-	return parser.ParseIntoStruct(i, f)
+	return converter.ConvertIntoStruct(i, f)
 }

@@ -1,268 +1,167 @@
 package parser_test
 
 import (
+	"bytes"
+	"errors"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/andreiavrammsd/config/internal/parser"
 )
 
-type config struct {
-	S        string
-	SDefault string
-
-	I8      int8
-	I16     int16
-	I32     int32
-	I64     int64
-	Integer int
-
-	UI8             uint8
-	UI16            uint16
-	UI32            uint32
-	UI64            uint64
-	UnsignedInteger uint
-
-	F32 float32
-	F64 float64
-
-	B bool
-
-	Bytes []byte
-
-	Struct struct {
-		Integer int
-	}
-}
-
-func getValue(s string) string {
-	vars := make(map[string]string)
-	vars["S"] = "string"
-	vars["SDefault"] = ""
-
-	vars["I8"] = "-8"
-	vars["I16"] = "-16"
-	vars["I32"] = "-32"
-	vars["I64"] = "-64"
-	vars["Integer"] = "-999"
-
-	vars["UI8"] = "8"
-	vars["UI16"] = "16"
-	vars["UI32"] = "32"
-	vars["UI64"] = "64"
-	vars["UNSIGNEDINTEGER"] = "999"
-
-	vars["F32"] = "32.2345225"
-	vars["F64"] = "-64.2342623678"
-
-	vars["B"] = "true"
-
-	vars["Bytes"] = "key=value"
-
-	vars["STRUCT_INTEGER"] = "123"
-
-	return vars[s]
-}
-
-func assertEqual[T comparable](t *testing.T, actual, expected T) {
-	if actual != expected {
-		t.Fatalf("%v != %v", actual, expected)
-	}
-}
-
-func TestParseIntoStruct(t *testing.T) {
-	i := config{}
-
-	err := parser.ParseIntoStruct(&i, getValue)
-
-	if err != nil {
-		t.Fatal("error not expected")
-	}
-
-	assertEqual(t, i.S, "string")
-	assertEqual(t, i.SDefault, "")
-
-	assertEqual(t, i.I8, -8)
-	assertEqual(t, i.I32, -32)
-	assertEqual(t, i.I64, -64)
-	assertEqual(t, i.Integer, -999)
-
-	assertEqual(t, i.UI8, 8)
-	assertEqual(t, i.UI32, 32)
-	assertEqual(t, i.UI64, 64)
-	assertEqual(t, i.UnsignedInteger, 999)
-
-	assertEqual(t, i.F32, 32.2345225)
-	assertEqual(t, i.F64, -64.2342623678)
-
-	assertEqual(t, i.B, true)
-
-	assertEqual(t, string(i.Bytes), "key=value")
-
-	assertEqual(t, i.Struct.Integer, 123)
-}
-
-func TestParseIntoStructWithValue(t *testing.T) {
-	i := struct{}{}
-
-	err := parser.ParseIntoStruct(i, getValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "config: value passed instead of reference" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func TestParseIntoStructWithNonStruct(t *testing.T) {
-	var i *int = nil
-
-	err := parser.ParseIntoStruct(i, getValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "config: non struct passed" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func TestParseIntoStructWithNilStruct(t *testing.T) {
-	var i *struct{} = nil
-
-	err := parser.ParseIntoStruct(i, getValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "config: nil struct passed" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func TestParseIntoStructWithIntParseError(t *testing.T) {
-	i := struct{ Value int }{}
-
-	getValue := func(s string) string {
-		vars := make(map[string]string)
-		vars["VALUE"] = "invalid value"
-		return vars[s]
-	}
-
-	err := parser.ParseIntoStruct(&i, getValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "config: strconv.ParseInt: parsing \"invalid value\": invalid syntax" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func TestParseIntoStructWithUintParseError(t *testing.T) {
-	i := struct{ Value uint }{}
-
-	getValue := func(s string) string {
-		vars := make(map[string]string)
-		vars["VALUE"] = "invalid value"
-		return vars[s]
-	}
-
-	err := parser.ParseIntoStruct(&i, getValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "config: strconv.ParseUint: parsing \"invalid value\": invalid syntax" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func TestParseIntoStructWithFloat32ParseError(t *testing.T) {
-	i := struct{ Value float32 }{}
-
-	getValue := func(s string) string {
-		vars := make(map[string]string)
-		vars["VALUE"] = "invalid value"
-		return vars[s]
-	}
-
-	err := parser.ParseIntoStruct(&i, getValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "config: strconv.ParseFloat: parsing \"invalid value\": invalid syntax" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func TestParseIntoStructWithFloat64ParseError(t *testing.T) {
-	i := struct{ Value float64 }{}
-
-	getValue := func(s string) string {
-		vars := make(map[string]string)
-		vars["VALUE"] = "invalid value"
-		return vars[s]
-	}
-
-	err := parser.ParseIntoStruct(&i, getValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "config: strconv.ParseFloat: parsing \"invalid value\": invalid syntax" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func TestParseIntoStructWithBoolParseError(t *testing.T) {
-	i := struct{ Value bool }{}
-
-	getValue := func(s string) string {
-		vars := make(map[string]string)
-		vars["VALUE"] = "invalid value"
-		return vars[s]
-	}
-
-	err := parser.ParseIntoStruct(&i, getValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "config: strconv.ParseBool: parsing \"invalid value\": invalid syntax" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func TestParseIntoStructWithInnerStructParseError(t *testing.T) {
-	i := struct {
-		Struct struct {
-			Integer int
+type Config struct {
+	Mongo struct {
+		Database struct {
+			Host       string `env:"MONGO_DATABASE_HOST"`
+			Collection struct {
+				Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
+				Other byte   `env:"MONGO_OTHER"`
+				X     rune   `env:"MONGO_X"`
+			}
 		}
-	}{}
-
-	getValue := func(s string) string {
-		vars := make(map[string]string)
-		vars["STRUCT_INTEGER"] = "invalid value"
-		return vars[s]
 	}
+	Redis struct {
+		Connection struct {
+			Host string
+			Port int `env:"REDIS_PORT"`
+		}
+	}
+	String       string `env:"ABC" default:"ignored"`
+	Struct       Struct
+	StructPtr    *Struct
+	D            int64
+	E            int
+	ENeg         int `env:"E_NEG"`
+	UD           uint64
+	UE           uint
+	F64          float64
+	Timeout      time.Duration
+	C            int32
+	UC           uint32
+	F32          float32
+	B            int16
+	UB           uint16
+	A            int8
+	UA           uint8
+	IsSet        bool
+	Interpolated string
+	Default      string `default:"default value"`
+}
 
-	err := parser.ParseIntoStruct(&i, getValue)
+type Struct struct {
+	Field string
+}
 
+type errReader struct {
+}
+
+func (e *errReader) Read(p []byte) (n int, err error) {
+	err = errors.New("reader error")
+	return
+}
+
+func TestWithParseReaderError(t *testing.T) {
+	kv := make(map[string]string)
+	err := parser.ParseVars(&errReader{}, kv)
+	if len(kv) > 0 {
+		t.Error("expected empty map")
+	}
 	if err == nil {
-		t.Fatal("error expected")
+		t.Error("expected reader error")
+	}
+}
+
+// Benchmark_parseVars-8            1663723               749 ns/op            4096 B/op          1 allocs/op
+func Benchmark_ParseVars(b *testing.B) {
+	b.ReportAllocs()
+
+	input, _, err := testdata()
+	if err != nil {
+		b.Fatal(err)
 	}
 
-	if err.Error() != "config: strconv.ParseInt: parsing \"invalid value\": invalid syntax" {
-		t.Fatal("incorrect error message:", err)
+	vars := make(map[string]string)
+	reader := bytes.NewReader(input)
+	for n := 0; n < b.N; n++ {
+		err := parser.ParseVars(reader, vars)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
+}
+
+func testdata() ([]byte, Config, error) {
+	input, err := os.ReadFile("../../testdata/.env")
+	if err != nil {
+		return nil, Config{}, err
+	}
+
+	expected := Config{
+		String: " string\\\" ",
+		A:      1,
+		B:      2,
+		C:      3,
+		D:      4,
+		E:      5,
+		ENeg:   -1,
+		UA:     1,
+		UB:     2,
+		UC:     3,
+		UD:     4,
+		UE:     5,
+		F32:    15425.2231,
+		F64:    245232212.9844448,
+		IsSet:  true,
+		Redis: struct {
+			Connection struct {
+				Host string
+				Port int `env:"REDIS_PORT"`
+			}
+		}{
+			Connection: struct {
+				Host string
+				Port int `env:"REDIS_PORT"`
+			}{
+				Host: " localhost ",
+				Port: 6379,
+			},
+		},
+		Timeout: time.Second * 2,
+		Struct: Struct{
+			Field: "Value",
+		},
+		Mongo: struct {
+			Database struct {
+				Host       string `env:"MONGO_DATABASE_HOST"`
+				Collection struct {
+					Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
+					Other byte   `env:"MONGO_OTHER"`
+					X     rune   `env:"MONGO_X"`
+				}
+			}
+		}{Database: struct {
+			Host       string `env:"MONGO_DATABASE_HOST"`
+			Collection struct {
+				Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
+				Other byte   `env:"MONGO_OTHER"`
+				X     rune   `env:"MONGO_X"`
+			}
+		}{
+			Host: "mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb",
+			Collection: struct {
+				Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
+				Other byte   `env:"MONGO_OTHER"`
+				X     rune   `env:"MONGO_X"`
+			}{
+				Name:  []byte("us=ers"),
+				Other: 1,
+				X:     'a',
+			},
+		}},
+		Interpolated: "$B env_1 $ $B \\3 6379 + $",
+		Default:      "default value",
+	}
+
+	return input, expected, nil
 }

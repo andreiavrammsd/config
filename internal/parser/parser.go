@@ -1,142 +1,185 @@
 package parser
 
 import (
-	"errors"
+	"bufio"
+	"bytes"
 	"fmt"
-	"reflect"
-	"strconv"
+	"io"
 	"strings"
+	"unicode"
 )
 
-const (
-	tag             = "env"
-	defaultValueTag = "default"
-)
+func ParseVars(r io.Reader, vars map[string]string) error {
+	reader := bufio.NewReader(r)
 
-type getValue func(string) string
+	var name, value []byte
 
-func ParseIntoStruct[T any](i T, data getValue) error {
-	typ := reflect.TypeOf(i)
+	atName := true
+	atValue := false
+	atComment := false
 
-	if typ.Kind() != reflect.Ptr {
-		return errors.New("config: value passed instead of reference")
-	}
-
-	if typ.Elem().Kind() != reflect.Struct {
-		return errors.New("config: non struct passed")
-	}
-
-	if reflect.ValueOf(i).IsNil() {
-		return errors.New("config: nil struct passed")
-	}
-
-	if err := parse(typ, reflect.ValueOf(i), data, ""); err != nil {
-		return fmt.Errorf("config: %s", err)
-	}
-
-	return nil
-}
-
-func parse(typ reflect.Type, val reflect.Value, getValue getValue, path string) error {
-	if typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
-
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-
-		path += field.Name + "_"
-
-		if val.Kind() == reflect.Ptr {
-			val = val.Elem()
-		}
-
-		if field.Type.Kind() == reflect.Struct {
-			if err := parse(field.Type, val.Field(i), getValue, path); err != nil {
-				return err
+	for {
+		r, _, err := reader.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				if atValue {
+					vars[string(name)] = varValue(value)
+				}
+				break
 			}
-			path = ""
+
+			return fmt.Errorf("config: cannot read from input (%s)", err)
 		}
 
-		value := value(&field, getValue, path)
+		if r == '#' {
+			if atValue {
+				vars[string(name)] = varValue(value)
+			}
 
-		if value == "" {
-			value = defaultValue(&field)
-		}
-
-		if value == "" {
+			name = nil
+			value = nil
+			atName = false
+			atValue = false
+			atComment = true
 			continue
 		}
-		path = ""
 
-		fieldValue := val.Field(i)
-		if err := setFieldValue(&field, fieldValue, value); err != nil {
-			return err
+		if r == '\n' || r == '\r' {
+			if atValue {
+				vars[string(name)] = varValue(value)
+			}
+
+			name = nil
+			value = nil
+			atName = true
+			atValue = false
+
+			if atComment {
+				atComment = false
+				continue
+			}
+
+			continue
+		}
+
+		if atComment {
+			continue
+		}
+
+		if r == '=' {
+			if atValue {
+				value = append(value, byte(r))
+			}
+			atName = false
+			atValue = true
+			continue
+		}
+
+		if atName {
+			if unicode.IsSpace(r) {
+				continue
+			}
+			name = append(name, byte(r))
+			continue
+		}
+
+		if atValue {
+			value = append(value, byte(r))
 		}
 	}
 
 	return nil
 }
 
-func value(field *reflect.StructField, getValue getValue, path string) string {
-	value := getValue(key(field, path))
-	if value == "" {
-		value = getValue(field.Name)
-	}
-	return value
+func varValue(v []byte) string {
+	return string(bytes.Trim(bytes.TrimSpace(v), `"'`))
 }
 
-func key(field *reflect.StructField, path string) string {
-	key := field.Tag.Get(tag)
-	if key == "" {
-		key = strings.ToUpper(strings.TrimSuffix(path, "_"))
+func InterpolateVars(vars map[string]string) {
+	for k, v := range vars {
+		if strings.IndexByte(v, '$') == -1 {
+			continue
+		}
+
+		atVar := false
+		var name []byte
+		var newValue []byte
+
+		for i := 0; i < len(v); i++ {
+			// Variable starts
+			if v[i] == '$' {
+				atVar = isAtVar(v, i)
+
+				if i == len(v)-1 && i-1 >= 0 && v[i-1] != '\\' {
+					newValue = append(newValue, v[i])
+				}
+
+				if atVar {
+					continue
+				}
+			}
+
+			if !atVar {
+				if nextVarIsDoubleEscaped(v, i) {
+					newValue = append(newValue, v[i])
+					continue
+				}
+
+				if nextVarIsEscaped(v, i) {
+					continue
+				}
+
+				newValue = append(newValue, v[i])
+				continue
+			}
+
+			if atVar && (v[i] == '{' || v[i] == '}') {
+				continue
+			}
+
+			if unicode.IsSpace(rune(v[i])) {
+				newValue = append(newValue, []byte(vars[string(name)])...)
+				newValue = append(newValue, v[i])
+				name = nil
+				atVar = false
+				continue
+			}
+
+			name = append(name, v[i])
+		}
+
+		if atVar {
+			newValue = append(newValue, []byte(vars[string(name)])...)
+		}
+
+		vars[k] = string(newValue)
 	}
-	return key
 }
 
-func defaultValue(field *reflect.StructField) string {
-	return field.Tag.Get(defaultValueTag)
-}
+func isAtVar(v string, i int) (atVar bool) {
+	atVar = true
 
-func setFieldValue(field *reflect.StructField, fieldValue reflect.Value, value string) error {
-	switch field.Type.Kind() {
-	case reflect.String:
-		if fieldValue.CanSet() {
-			fieldValue.SetString(value)
-		}
-	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
-		v, err := strconv.ParseInt(value, 10, 0)
-		if err != nil {
-			return err
-		}
-		fieldValue.SetInt(v)
-	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
-		v, err := strconv.ParseUint(value, 10, 0)
-		if err != nil {
-			return err
-		}
-		fieldValue.SetUint(v)
-	case reflect.Float32:
-		v, err := strconv.ParseFloat(value, 32)
-		if err != nil {
-			return err
-		}
-		fieldValue.SetFloat(v)
-	case reflect.Float64:
-		v, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			return err
-		}
-		fieldValue.SetFloat(v)
-	case reflect.Bool:
-		v, err := strconv.ParseBool(value)
-		if err != nil {
-			return err
-		}
-		fieldValue.SetBool(v)
-	case reflect.Slice:
-		fieldValue.SetBytes([]byte(value))
+	// Variable is escaped
+	if i-1 >= 0 && v[i-1] == '\\' {
+		atVar = false
 	}
 
-	return nil
+	// Variable is double escaped
+	if i-2 > 0 && v[i-2] == '\\' {
+		atVar = true
+	}
+
+	if i+1 < len(v) && (unicode.IsSpace(rune(v[i+1])) || v[i+1] == '"' || v[i+1] == '\'') {
+		atVar = false
+	}
+
+	return
+}
+
+func nextVarIsDoubleEscaped(v string, i int) bool {
+	return v[i] == '\\' && i+1 < len(v) && v[i+1] == '\\' && i+2 < len(v) && v[i+2] == '$'
+}
+
+func nextVarIsEscaped(v string, i int) bool {
+	return v[i] == '\\' && i+1 < len(v) && v[i+1] == '$'
 }
