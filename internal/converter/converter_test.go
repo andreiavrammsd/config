@@ -69,7 +69,7 @@ func assertEqual[T comparable](t *testing.T, actual, expected T) {
 	}
 }
 
-func TestParseIntoStruct(t *testing.T) {
+func TestConvertIntoStruct(t *testing.T) {
 	i := config{}
 
 	err := converter.ConvertIntoStruct(&i, getValue)
@@ -101,7 +101,7 @@ func TestParseIntoStruct(t *testing.T) {
 	assertEqual(t, i.Struct.Integer, 123)
 }
 
-func TestParseIntoStructWithValue(t *testing.T) {
+func TestConvertIntoStructWithValue(t *testing.T) {
 	i := struct{}{}
 
 	err := converter.ConvertIntoStruct(i, getValue)
@@ -115,7 +115,7 @@ func TestParseIntoStructWithValue(t *testing.T) {
 	}
 }
 
-func TestParseIntoStructWithNonStruct(t *testing.T) {
+func TestConvertIntoStructWithNonStruct(t *testing.T) {
 	var i *int = nil
 
 	err := converter.ConvertIntoStruct(i, getValue)
@@ -129,7 +129,7 @@ func TestParseIntoStructWithNonStruct(t *testing.T) {
 	}
 }
 
-func TestParseIntoStructWithNilStruct(t *testing.T) {
+func TestConvertIntoStructWithNilStruct(t *testing.T) {
 	var i *struct{} = nil
 
 	err := converter.ConvertIntoStruct(i, getValue)
@@ -143,7 +143,7 @@ func TestParseIntoStructWithNilStruct(t *testing.T) {
 	}
 }
 
-func TestParseIntoStructWithIntParseError(t *testing.T) {
+func TestConvertIntoStructWithIntParseError(t *testing.T) {
 	i := struct{ Value int }{}
 
 	getValue := func(s string) string {
@@ -163,7 +163,7 @@ func TestParseIntoStructWithIntParseError(t *testing.T) {
 	}
 }
 
-func TestParseIntoStructWithUintParseError(t *testing.T) {
+func TestConvertIntoStructWithUintParseError(t *testing.T) {
 	i := struct{ Value uint }{}
 
 	getValue := func(s string) string {
@@ -183,7 +183,7 @@ func TestParseIntoStructWithUintParseError(t *testing.T) {
 	}
 }
 
-func TestParseIntoStructWithFloat32ParseError(t *testing.T) {
+func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
 	i := struct{ Value float32 }{}
 
 	getValue := func(s string) string {
@@ -203,7 +203,7 @@ func TestParseIntoStructWithFloat32ParseError(t *testing.T) {
 	}
 }
 
-func TestParseIntoStructWithFloat64ParseError(t *testing.T) {
+func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
 	i := struct{ Value float64 }{}
 
 	getValue := func(s string) string {
@@ -223,7 +223,7 @@ func TestParseIntoStructWithFloat64ParseError(t *testing.T) {
 	}
 }
 
-func TestParseIntoStructWithBoolParseError(t *testing.T) {
+func TestConvertIntoStructWithBoolParseError(t *testing.T) {
 	i := struct{ Value bool }{}
 
 	getValue := func(s string) string {
@@ -243,7 +243,7 @@ func TestParseIntoStructWithBoolParseError(t *testing.T) {
 	}
 }
 
-func TestParseIntoStructWithInnerStructParseError(t *testing.T) {
+func TestConvertIntoStructWithInnerStructParseError(t *testing.T) {
 	i := struct {
 		Struct struct {
 			Integer int
