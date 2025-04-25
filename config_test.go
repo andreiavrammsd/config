@@ -307,19 +307,20 @@ func testdata() ([]byte, Config, error) {
 func TestWithNilStructPassed(t *testing.T) {
 	tests := []func() error{
 		func() error {
-			return Load(nil).Env()
+			var ptr *struct{} = nil
+			return Load(ptr).Env()
 		},
 		func() error {
-			return Load(nil).EnvFile()
+			return Load[*int](nil).EnvFile()
 		},
 		func() error {
-			return Load(nil).Bytes(nil)
+			return Load[*int](nil).Bytes(nil)
 		},
 		func() error {
-			return Load(nil).String("")
+			return Load[*int](nil).String("")
 		},
 		func() error {
-			return Load(nil).JSON(nil)
+			return Load[*int](nil).JSON(nil)
 		},
 	}
 

@@ -12,7 +12,6 @@ package config
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 
@@ -22,31 +21,23 @@ import (
 const dotEnvFile = ".env"
 
 // Loader provides methods to load configuration values into a struct
-type Loader struct {
-	i interface{}
+type Loader[T any] struct {
+	i T
 }
 
 // Load creates a Loader with given struct
-func Load(i interface{}) *Loader {
-	return &Loader{i: i}
+func Load[T any](i T) *Loader[T] {
+	return &Loader[T]{i: i}
 }
 
 // Env loads config into struct from environment variables
-func (l *Loader) Env() error {
-	if err := checkNilStruct(l.i); err != nil {
-		return err
-	}
-
+func (l *Loader[T]) Env() error {
 	return parser.ParseIntoStruct(l.i, os.Getenv)
 }
 
 // EnvFile loads config into struct from environment variables in one or multiple files (dotenv).
 // If no file is passed, the default is ".env".
-func (l *Loader) EnvFile(files ...string) error {
-	if err := checkNilStruct(l.i); err != nil {
-		return err
-	}
-
+func (l *Loader[T]) EnvFile(files ...string) error {
 	if len(files) == 0 {
 		files = append(files, dotEnvFile)
 	}
@@ -83,41 +74,21 @@ func (l *Loader) EnvFile(files ...string) error {
 }
 
 // Bytes loads config into struct from byte array
-func (l *Loader) Bytes(input []byte) error {
-	if err := checkNilStruct(l.i); err != nil {
-		return err
-	}
-
+func (l *Loader[T]) Bytes(input []byte) error {
 	return fromBytes(l.i, input)
 }
 
 // String loads config into struct from a string
-func (l *Loader) String(input string) error {
-	if err := checkNilStruct(l.i); err != nil {
-		return err
-	}
-
+func (l *Loader[T]) String(input string) error {
 	return fromBytes(l.i, []byte(input))
 }
 
 // JSON loads config into struct from json
-func (l *Loader) JSON(input json.RawMessage) error {
-	if err := checkNilStruct(l.i); err != nil {
-		return err
-	}
-
+func (l *Loader[T]) JSON(input json.RawMessage) error {
 	return json.Unmarshal(input, l.i)
 }
 
-func checkNilStruct(i interface{}) error {
-	if i == nil {
-		return errors.New("config: nil struct passed")
-	}
-
-	return nil
-}
-
-func fromBytes(i interface{}, input []byte) error {
+func fromBytes[T any](i T, input []byte) error {
 	vars := make(map[string]string)
 
 	if err := parser.ParseVars(bytes.NewReader(input), vars); err != nil {

@@ -15,7 +15,7 @@ const (
 
 type getValue func(string) string
 
-func ParseIntoStruct(i interface{}, data getValue) error {
+func ParseIntoStruct[T any](i T, data getValue) error {
 	typ := reflect.TypeOf(i)
 
 	if typ.Kind() != reflect.Ptr {
@@ -24,6 +24,10 @@ func ParseIntoStruct(i interface{}, data getValue) error {
 
 	if typ.Elem().Kind() != reflect.Struct {
 		return errors.New("config: non struct passed")
+	}
+
+	if reflect.ValueOf(i).IsNil() {
+		return errors.New("config: nil struct passed")
 	}
 
 	if err := parse(typ, reflect.ValueOf(i), data, ""); err != nil {
