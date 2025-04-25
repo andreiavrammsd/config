@@ -18,16 +18,15 @@ import (
 	"github.com/andreiavrammsd/config/internal/parser"
 )
 
-const dotEnvFile = ".env"
-
 // Loader provides methods to load configuration values into a struct
 type Loader[T any] struct {
-	i T
+	i          T
+	dotEnvFile string
 }
 
 // Load creates a Loader with given struct
 func Load[T any](i T) *Loader[T] {
-	return &Loader[T]{i: i}
+	return &Loader[T]{i: i, dotEnvFile: ".env"}
 }
 
 // Env loads config into struct from environment variables
@@ -39,7 +38,7 @@ func (l *Loader[T]) Env() error {
 // If no file is passed, the default is ".env".
 func (l *Loader[T]) EnvFile(files ...string) error {
 	if len(files) == 0 {
-		files = append(files, dotEnvFile)
+		files = []string{l.dotEnvFile}
 	}
 
 	vars := make(map[string]string)
