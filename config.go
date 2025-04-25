@@ -50,7 +50,7 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 			return fmt.Errorf("config: %s", err)
 		}
 
-		err = parser.ParseVars(f, vars)
+		err = parser.Parse(f, vars)
 
 		if err != nil {
 			if e := f.Close(); e != nil {
@@ -64,7 +64,7 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 		}
 	}
 
-	parser.InterpolateVars(vars)
+	parser.Interpolate(vars)
 
 	f := func(s string) string {
 		return vars[s]
@@ -91,11 +91,11 @@ func (l *Loader[T]) JSON(input json.RawMessage) error {
 func fromBytes[T any](i T, input []byte) error {
 	vars := make(map[string]string)
 
-	if err := parser.ParseVars(bytes.NewReader(input), vars); err != nil {
+	if err := parser.Parse(bytes.NewReader(input), vars); err != nil {
 		return err
 	}
 
-	parser.InterpolateVars(vars)
+	parser.Interpolate(vars)
 
 	f := func(s string) string {
 		return vars[s]

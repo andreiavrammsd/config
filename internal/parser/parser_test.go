@@ -63,7 +63,7 @@ func (e *errReader) Read(p []byte) (n int, err error) {
 
 func TestWithParseReaderError(t *testing.T) {
 	kv := make(map[string]string)
-	err := parser.ParseVars(&errReader{}, kv)
+	err := parser.Parse(&errReader{}, kv)
 	if len(kv) > 0 {
 		t.Error("expected empty map")
 	}
@@ -84,7 +84,7 @@ func Benchmark_ParseVars(b *testing.B) {
 	vars := make(map[string]string)
 	reader := bytes.NewReader(input)
 	for n := 0; n < b.N; n++ {
-		err := parser.ParseVars(reader, vars)
+		err := parser.Parse(reader, vars)
 		if err != nil {
 			b.Fatal(err)
 		}

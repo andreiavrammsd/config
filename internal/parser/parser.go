@@ -9,7 +9,7 @@ import (
 	"unicode"
 )
 
-func ParseVars(r io.Reader, vars map[string]string) error {
+func Parse(r io.Reader, vars map[string]string) error {
 	reader := bufio.NewReader(r)
 
 	var name, value []byte
@@ -95,7 +95,7 @@ func varValue(v []byte) string {
 	return string(bytes.Trim(bytes.TrimSpace(v), `"'`))
 }
 
-func InterpolateVars(vars map[string]string) {
+func Interpolate(vars map[string]string) {
 	for k, v := range vars {
 		if strings.IndexByte(v, '$') == -1 {
 			continue
