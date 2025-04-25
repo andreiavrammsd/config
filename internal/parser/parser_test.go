@@ -3,54 +3,121 @@ package parser_test
 import (
 	"bytes"
 	"errors"
-	"os"
+	"io"
 	"testing"
-	"time"
 
 	"github.com/andreiavrammsd/config/internal/parser"
 )
 
-type Config struct {
-	Mongo struct {
-		Database struct {
-			Host       string `env:"MONGO_DATABASE_HOST"`
-			Collection struct {
-				Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
-				Other byte   `env:"MONGO_OTHER"`
-				X     rune   `env:"MONGO_X"`
-			}
-		}
+const environment string = ` # key=value
+TIMEOUT=2000000000
+ABC =" string\" "
+A =1
+  B  =2
+C=3# key=value
+D =4
+E=5
+E_NEG=-1
+UA=1  # key=value
+UB=2
+# comment
+UC=30
+
+UD=40
+UE=50
+F32=15425.2231
+F64=245232212.9844448
+IsSet=true
+REDIS_CONNECTION_HOST=" localhost "
+REDIS_PORT=6379
+STRUCT_FIELD=Value
+STRUCTPTR_FIELD="Val\"ue "
+MONGO_DATABASE_HOST="mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb" # db connection
+MONGO_DATABASE_COLLECTION_NAME='us=ers'
+MONGO_OTHER=$A
+MONGO_X=97
+# comment
+INTERPOLATED="\$B env_$A $ \$B \\$C ${REDIS_PORT} + $"
+
+`
+
+func assertNotExist(t *testing.T, key string, vars map[string]string) {
+	if _, ok := vars[key]; ok {
+		t.Fatalf("%s not expected", key)
 	}
-	Redis struct {
-		Connection struct {
-			Host string
-			Port int `env:"REDIS_PORT"`
-		}
-	}
-	String       string `env:"ABC" default:"ignored"`
-	Struct       Struct
-	StructPtr    *Struct
-	D            int64
-	E            int
-	ENeg         int `env:"E_NEG"`
-	UD           uint64
-	UE           uint
-	F64          float64
-	Timeout      time.Duration
-	C            int32
-	UC           uint32
-	F32          float32
-	B            int16
-	UB           uint16
-	A            int8
-	UA           uint8
-	IsSet        bool
-	Interpolated string
-	Default      string `default:"default value"`
 }
 
-type Struct struct {
-	Field string
+func assertEqual(t *testing.T, actual, expected string) {
+	if actual != expected {
+		t.Fatalf("%s != %s", actual, expected)
+	}
+}
+
+func TestParse(t *testing.T) {
+	reader := bytes.NewReader([]byte(environment))
+	vars := make(map[string]string)
+	err := parser.Parse(reader, vars)
+
+	if err != nil {
+		t.Error("expected no error")
+	}
+
+	assertNotExist(t, "key", vars)
+	assertEqual(t, vars["TIMEOUT"], "2000000000")
+	assertEqual(t, vars["ABC"], " string\\\" ")
+	assertEqual(t, vars["A"], "1")
+	assertEqual(t, vars["B"], "2")
+	assertEqual(t, vars["C"], "3")
+	assertNotExist(t, "KEY3", vars)
+	assertEqual(t, vars["D"], "4")
+	assertEqual(t, vars["E"], "5")
+	assertEqual(t, vars["E_NEG"], "-1")
+	assertEqual(t, vars["UA"], "1")
+	assertNotExist(t, "KEY", vars)
+	assertEqual(t, vars["UB"], "2")
+	assertNotExist(t, "comment", vars)
+	assertEqual(t, vars["UC"], "30")
+	assertEqual(t, vars["UD"], "40")
+	assertEqual(t, vars["UE"], "50")
+	assertEqual(t, vars["F32"], "15425.2231")
+	assertEqual(t, vars["F64"], "245232212.9844448")
+	assertEqual(t, vars["IsSet"], "true")
+	assertEqual(t, vars["REDIS_CONNECTION_HOST"], " localhost ")
+	assertEqual(t, vars["REDIS_PORT"], "6379")
+	assertEqual(t, vars["STRUCT_FIELD"], "Value")
+	assertEqual(t, vars["STRUCTPTR_FIELD"], "Val\\\"ue ")
+	assertEqual(t, vars["MONGO_DATABASE_HOST"], "mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb")
+	assertEqual(t, vars["MONGO_DATABASE_COLLECTION_NAME"], "us=ers")
+	assertEqual(t, vars["MONGO_OTHER"], "$A")
+	assertEqual(t, vars["MONGO_X"], "97")
+	assertEqual(t, vars["INTERPOLATED"], "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $")
+}
+
+type eofReader struct {
+	content string
+	atChar  int
+}
+
+func (e *eofReader) Read(p []byte) (n int, err error) {
+	if e.atChar >= len(e.content) {
+		return 0, io.EOF
+	}
+
+	n = copy(p, e.content)
+	e.atChar += n
+
+	return n, nil
+}
+
+func TestParseWithEOF(t *testing.T) {
+	vars := make(map[string]string)
+	err := parser.Parse(&eofReader{"a=b", 0}, vars)
+
+	if err != nil {
+		t.Error("expected no error")
+	}
+
+	assertEqual(t, vars["a"], "b")
 }
 
 type errReader struct {
@@ -61,28 +128,31 @@ func (e *errReader) Read(p []byte) (n int, err error) {
 	return
 }
 
-func TestWithParseReaderError(t *testing.T) {
-	kv := make(map[string]string)
-	err := parser.Parse(&errReader{}, kv)
-	if len(kv) > 0 {
+func TestParseWithReaderError(t *testing.T) {
+	vars := make(map[string]string)
+	err := parser.Parse(&errReader{}, vars)
+
+	if len(vars) > 0 {
 		t.Error("expected empty map")
 	}
+
 	if err == nil {
 		t.Error("expected reader error")
 	}
+
+	if err.Error() != "config: cannot read from input (reader error)" {
+		t.Fatal("incorrect error message:", err)
+	}
 }
 
-// Benchmark_parseVars-8            1663723               749 ns/op            4096 B/op          1 allocs/op
-func Benchmark_ParseVars(b *testing.B) {
-	b.ReportAllocs()
-
-	input, _, err := testdata()
-	if err != nil {
-		b.Fatal(err)
-	}
-
+// Benchmark_Parse-8        1934143               606.9 ns/op          4096 B/op          1 allocs/op
+func Benchmark_Parse(b *testing.B) {
+	reader := bytes.NewReader([]byte(environment))
 	vars := make(map[string]string)
-	reader := bytes.NewReader(input)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
 	for n := 0; n < b.N; n++ {
 		err := parser.Parse(reader, vars)
 		if err != nil {
@@ -91,77 +161,65 @@ func Benchmark_ParseVars(b *testing.B) {
 	}
 }
 
-func testdata() ([]byte, Config, error) {
-	input, err := os.ReadFile("../../testdata/.env")
-	if err != nil {
-		return nil, Config{}, err
-	}
+func TestInterpolate(t *testing.T) {
+	vars := make(map[string]string)
+	vars["TIMEOUT"] = "2000000000"
+	vars["ABC"] = " string\\\" "
+	vars["A"] = "1"
+	vars["C"] = "xx"
+	vars["E_NEG"] = "-1"
+	vars["F32"] = "15425.2231"
+	vars["F64"] = "245232212.9844448"
+	vars["IsSet"] = "true"
+	vars["REDIS_CONNECTION_HOST"] = " localhost "
+	vars["REDIS_PORT"] = "6379"
+	vars["STRUCTPTR_FIELD"] = "Val\\\"ue "
+	vars["MONGO_DATABASE_HOST"] = "mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb"
+	vars["MONGO_DATABASE_COLLECTION_NAME"] = "us=ers"
+	vars["MONGO_OTHER"] = "$A"
+	vars["INTERPOLATED"] = "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $"
 
-	expected := Config{
-		String: " string\\\" ",
-		A:      1,
-		B:      2,
-		C:      3,
-		D:      4,
-		E:      5,
-		ENeg:   -1,
-		UA:     1,
-		UB:     2,
-		UC:     3,
-		UD:     4,
-		UE:     5,
-		F32:    15425.2231,
-		F64:    245232212.9844448,
-		IsSet:  true,
-		Redis: struct {
-			Connection struct {
-				Host string
-				Port int `env:"REDIS_PORT"`
-			}
-		}{
-			Connection: struct {
-				Host string
-				Port int `env:"REDIS_PORT"`
-			}{
-				Host: " localhost ",
-				Port: 6379,
-			},
-		},
-		Timeout: time.Second * 2,
-		Struct: Struct{
-			Field: "Value",
-		},
-		Mongo: struct {
-			Database struct {
-				Host       string `env:"MONGO_DATABASE_HOST"`
-				Collection struct {
-					Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
-					Other byte   `env:"MONGO_OTHER"`
-					X     rune   `env:"MONGO_X"`
-				}
-			}
-		}{Database: struct {
-			Host       string `env:"MONGO_DATABASE_HOST"`
-			Collection struct {
-				Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
-				Other byte   `env:"MONGO_OTHER"`
-				X     rune   `env:"MONGO_X"`
-			}
-		}{
-			Host: "mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb",
-			Collection: struct {
-				Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
-				Other byte   `env:"MONGO_OTHER"`
-				X     rune   `env:"MONGO_X"`
-			}{
-				Name:  []byte("us=ers"),
-				Other: 1,
-				X:     'a',
-			},
-		}},
-		Interpolated: "$B env_1 $ $B \\3 6379 + $",
-		Default:      "default value",
-	}
+	parser.Interpolate(vars)
 
-	return input, expected, nil
+	assertEqual(t, vars["TIMEOUT"], "2000000000")
+	assertEqual(t, vars["ABC"], " string\\\" ")
+	assertEqual(t, vars["A"], "1")
+	assertEqual(t, vars["E_NEG"], "-1")
+	assertEqual(t, vars["F32"], "15425.2231")
+	assertEqual(t, vars["F64"], "245232212.9844448")
+	assertEqual(t, vars["IsSet"], "true")
+	assertEqual(t, vars["REDIS_CONNECTION_HOST"], " localhost ")
+	assertEqual(t, vars["REDIS_PORT"], "6379")
+	assertEqual(t, vars["STRUCTPTR_FIELD"], "Val\\\"ue ")
+	assertEqual(t, vars["MONGO_DATABASE_HOST"], "mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb")
+	assertEqual(t, vars["MONGO_DATABASE_COLLECTION_NAME"], "us=ers")
+	assertEqual(t, vars["MONGO_OTHER"], "1")
+	assertEqual(t, vars["INTERPOLATED"], "$B env_1 $ $B \\xx 6379 + $")
+}
+
+// Benchmark_Interpolate-8          2369497               495.0 ns/op            80 B/op          4 allocs/op
+func Benchmark_Interpolate(b *testing.B) {
+	vars := make(map[string]string)
+	vars["TIMEOUT"] = "2000000000"
+	vars["ABC"] = " string\\\" "
+	vars["A"] = "1"
+	vars["C"] = "xx"
+	vars["E_NEG"] = "-1"
+	vars["F32"] = "15425.2231"
+	vars["F64"] = "245232212.9844448"
+	vars["IsSet"] = "true"
+	vars["REDIS_CONNECTION_HOST"] = " localhost "
+	vars["REDIS_PORT"] = "6379"
+	vars["STRUCTPTR_FIELD"] = "Val\\\"ue "
+	vars["MONGO_DATABASE_HOST"] = "mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb"
+	vars["MONGO_DATABASE_COLLECTION_NAME"] = "us=ers"
+	vars["MONGO_OTHER"] = "$A"
+	vars["INTERPOLATED"] = "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $"
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		parser.Interpolate(vars)
+	}
 }
