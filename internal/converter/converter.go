@@ -16,8 +16,8 @@ type ReadValue = func(string) string
 
 // ConvertIntoStruct take a pointer to a struct and, for each property in the struct (recursively),
 // generates a key that it passes to the given readValue function which must return the value for the property.
-func ConvertIntoStruct[T any](i T, readValue ReadValue) error {
-	typ := reflect.TypeOf(i)
+func ConvertIntoStruct[T any](configStruct T, readValue ReadValue) error {
+	typ := reflect.TypeOf(configStruct)
 
 	if typ.Kind() != reflect.Ptr {
 		return errors.New("value passed instead of reference")
@@ -27,11 +27,11 @@ func ConvertIntoStruct[T any](i T, readValue ReadValue) error {
 		return errors.New("non struct passed")
 	}
 
-	if reflect.ValueOf(i).IsNil() {
+	if reflect.ValueOf(configStruct).IsNil() {
 		return errors.New("nil struct passed")
 	}
 
-	return parse(typ, reflect.ValueOf(i), readValue, "")
+	return parse(typ, reflect.ValueOf(configStruct), readValue, "")
 }
 
 func parse(typ reflect.Type, val reflect.Value, readValue ReadValue, path string) error {

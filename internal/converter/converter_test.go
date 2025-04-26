@@ -71,44 +71,44 @@ func assertEqual[T comparable](t *testing.T, actual, expected T) {
 }
 
 func TestConvertIntoStruct(t *testing.T) {
-	i := config{}
+	configStruct := config{}
 
-	err := converter.ConvertIntoStruct(&i, readValue)
+	err := converter.ConvertIntoStruct(&configStruct, readValue)
 
 	if err != nil {
 		t.Fatal("error not expected")
 	}
 
-	assertEqual(t, i.S, "string")
-	assertEqual(t, i.SEmpty, "")
-	assertEqual(t, i.SDefault, "default value")
+	assertEqual(t, configStruct.S, "string")
+	assertEqual(t, configStruct.SEmpty, "")
+	assertEqual(t, configStruct.SDefault, "default value")
 
-	assertEqual(t, i.I8, -8)
-	assertEqual(t, i.I16, -16)
-	assertEqual(t, i.I32, -32)
-	assertEqual(t, i.I64, -64)
-	assertEqual(t, i.Integer, -999)
+	assertEqual(t, configStruct.I8, -8)
+	assertEqual(t, configStruct.I16, -16)
+	assertEqual(t, configStruct.I32, -32)
+	assertEqual(t, configStruct.I64, -64)
+	assertEqual(t, configStruct.Integer, -999)
 
-	assertEqual(t, i.UI8, 8)
-	assertEqual(t, i.UI16, 16)
-	assertEqual(t, i.UI32, 32)
-	assertEqual(t, i.UI64, 64)
-	assertEqual(t, i.UnsignedInteger, 999)
+	assertEqual(t, configStruct.UI8, 8)
+	assertEqual(t, configStruct.UI16, 16)
+	assertEqual(t, configStruct.UI32, 32)
+	assertEqual(t, configStruct.UI64, 64)
+	assertEqual(t, configStruct.UnsignedInteger, 999)
 
-	assertEqual(t, i.F32, 32.2345225)
-	assertEqual(t, i.F64, -64.2342623678)
+	assertEqual(t, configStruct.F32, 32.2345225)
+	assertEqual(t, configStruct.F64, -64.2342623678)
 
-	assertEqual(t, i.B, true)
+	assertEqual(t, configStruct.B, true)
 
-	assertEqual(t, string(i.Bytes), "key=value")
+	assertEqual(t, string(configStruct.Bytes), "key=value")
 
-	assertEqual(t, i.Struct.Integer, 123)
+	assertEqual(t, configStruct.Struct.Integer, 123)
 }
 
 func TestConvertIntoStructWithValue(t *testing.T) {
-	i := struct{}{}
+	configStruct := struct{}{}
 
-	err := converter.ConvertIntoStruct(i, readValue)
+	err := converter.ConvertIntoStruct(configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -148,7 +148,7 @@ func TestConvertIntoStructWithNilStruct(t *testing.T) {
 }
 
 func TestConvertIntoStructWithIntParseError(t *testing.T) {
-	i := struct{ Value int }{}
+	configStruct := struct{ Value int }{}
 
 	readValue := func(s string) string {
 		vars := make(map[string]string)
@@ -156,7 +156,7 @@ func TestConvertIntoStructWithIntParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, readValue)
+	err := converter.ConvertIntoStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -168,7 +168,7 @@ func TestConvertIntoStructWithIntParseError(t *testing.T) {
 }
 
 func TestConvertIntoStructWithUintParseError(t *testing.T) {
-	i := struct{ Value uint }{}
+	configStruct := struct{ Value uint }{}
 
 	readValue := func(s string) string {
 		vars := make(map[string]string)
@@ -176,7 +176,7 @@ func TestConvertIntoStructWithUintParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, readValue)
+	err := converter.ConvertIntoStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -188,7 +188,7 @@ func TestConvertIntoStructWithUintParseError(t *testing.T) {
 }
 
 func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
-	i := struct{ Value float32 }{}
+	configStruct := struct{ Value float32 }{}
 
 	readValue := func(s string) string {
 		vars := make(map[string]string)
@@ -196,7 +196,7 @@ func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, readValue)
+	err := converter.ConvertIntoStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -208,7 +208,7 @@ func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
 }
 
 func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
-	i := struct{ Value float64 }{}
+	configStruct := struct{ Value float64 }{}
 
 	readValue := func(s string) string {
 		vars := make(map[string]string)
@@ -216,7 +216,7 @@ func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, readValue)
+	err := converter.ConvertIntoStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -228,7 +228,7 @@ func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
 }
 
 func TestConvertIntoStructWithBoolParseError(t *testing.T) {
-	i := struct{ Value bool }{}
+	configStruct := struct{ Value bool }{}
 
 	readValue := func(s string) string {
 		vars := make(map[string]string)
@@ -236,7 +236,7 @@ func TestConvertIntoStructWithBoolParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, readValue)
+	err := converter.ConvertIntoStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -248,7 +248,7 @@ func TestConvertIntoStructWithBoolParseError(t *testing.T) {
 }
 
 func TestConvertIntoStructWithInnerStructParseError(t *testing.T) {
-	i := struct {
+	configStruct := struct {
 		Struct struct {
 			Integer int
 		}
@@ -260,7 +260,7 @@ func TestConvertIntoStructWithInnerStructParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, readValue)
+	err := converter.ConvertIntoStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
