@@ -13,7 +13,7 @@ const (
 	defaultValueTag = "default"
 )
 
-type getValue func(string) string
+type getValue = func(string) string
 
 func ConvertIntoStruct[T any](i T, data getValue) error {
 	typ := reflect.TypeOf(i)

@@ -13,6 +13,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/andreiavrammsd/config/internal/converter"
@@ -23,16 +24,23 @@ import (
 type Loader[T any] struct {
 	i          T
 	dotEnvFile string
+	parse      func(r io.Reader, vars map[string]string) error
+	convert    func(i T, data func(string) string) error
 }
 
 // Load creates a Loader with given struct
 func Load[T any](config T) *Loader[T] {
-	return &Loader[T]{i: config, dotEnvFile: ".env"}
+	return &Loader[T]{
+		i:          config,
+		dotEnvFile: ".env",
+		parse:      parser.Parse,
+		convert:    converter.ConvertIntoStruct[T],
+	}
 }
 
 // Env loads config into struct from environment variables
 func (l *Loader[T]) Env() error {
-	return converter.ConvertIntoStruct(l.i, os.Getenv)
+	return l.convert(l.i, os.Getenv)
 }
 
 // EnvFile loads config into struct from environment variables in one or multiple files (dotenv).
@@ -50,7 +58,7 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 			return fmt.Errorf("config: %w", err)
 		}
 
-		if err = parser.Parse(file, vars); err != nil {
+		if err = l.parse(file, vars); err != nil {
 			file.Close()
 			return fmt.Errorf("config: %w", err)
 		}
@@ -60,21 +68,22 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 
 	parser.Interpolate(vars)
 
-	if err := converter.ConvertIntoStruct(l.i, func(s string) string { return vars[s] }); err != nil {
+	if err := l.convert(l.i, func(s string) string { return vars[s] }); err != nil {
 		return fmt.Errorf("config: %w", err)
 	}
 
 	return nil
+
 }
 
 // Bytes loads config into struct from byte array
 func (l *Loader[T]) Bytes(input []byte) error {
-	return fromBytes(l.i, input)
+	return l.fromBytes(input)
 }
 
 // String loads config into struct from a string
 func (l *Loader[T]) String(input string) error {
-	return fromBytes(l.i, []byte(input))
+	return l.fromBytes([]byte(input))
 }
 
 // JSON loads config into struct from json
@@ -86,14 +95,14 @@ func (l *Loader[T]) JSON(input json.RawMessage) error {
 	return nil
 }
 
-func fromBytes[T any](i T, input []byte) error {
+func (l *Loader[T]) fromBytes(input []byte) error {
 	vars := make(map[string]string)
 
-	if err := parser.Parse(bytes.NewReader(input), vars); err != nil {
+	if err := l.parse(bytes.NewReader(input), vars); err != nil {
 		return fmt.Errorf("config: %w", err)
 	}
 
 	parser.Interpolate(vars)
 
-	return converter.ConvertIntoStruct(i, func(s string) string { return vars[s] })
+	return l.convert(l.i, func(s string) string { return vars[s] })
 }
