@@ -9,59 +9,70 @@ import (
 )
 
 type Stream struct {
-	reader *bufio.Reader
-	r      rune
+	reader  *bufio.Reader
+	current rune
 }
 
 func (s *Stream) advance() (err error) {
-	s.r, _, err = s.reader.ReadRune()
+	s.current, _, err = s.reader.ReadRune()
 	return
 }
 
 func (s *Stream) isCommentBegin() bool {
-	return s.r == '#'
+	return s.current == '#'
 }
 
 func (s *Stream) isLineEnd() bool {
-	return s.r == '\n' || s.r == '\r'
+	return s.current == '\n' || s.current == '\r'
 }
 
 func (s *Stream) isEqualSign() bool {
-	return s.r == '='
+	return s.current == '='
 }
 
 func (s *Stream) isSpace() bool {
-	return unicode.IsSpace(s.r)
+	return unicode.IsSpace(s.current)
+}
+
+type Tokens struct {
+	atName bool
+	name   []byte
+
+	atValue bool
+	value   []byte
+
+	atComment bool
+}
+
+func (p *Tokens) appendToName(r rune) {
+	p.name = append(p.name, byte(r))
+}
+
+func (p *Tokens) appendToValue(r rune) {
+	p.value = append(p.value, byte(r))
 }
 
 type Parser struct {
-	vars map[string]string
-
-	name  []byte
-	value []byte
-
-	atName    bool
-	atValue   bool
-	atComment bool
-
+	vars   map[string]string
 	stream Stream
+	tokens Tokens
 }
 
 func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
-	p.vars = vars
-
-	p.name = nil
-	p.value = nil
-	p.startName()
-	p.stopValue()
-	p.stopComment()
-
 	p.stream = Stream{reader: bufio.NewReader(r)}
+	p.tokens = Tokens{
+		atName:    true,
+		name:      nil,
+		atValue:   false,
+		value:     nil,
+		atComment: false,
+	}
+	p.vars = vars
 
 	for {
 		if err := p.stream.advance(); err != nil {
 			if err == io.EOF {
-				if p.isAtValue() {
+				if p.tokens.atValue {
 					p.saveVar()
 				}
 				break
@@ -71,108 +82,64 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 		}
 
 		if p.stream.isCommentBegin() {
-			if p.isAtValue() {
+			if p.tokens.atValue {
 				p.saveVar()
 			}
 
-			p.stopName()
-			p.startComment()
+			p.tokens.atName = false
+			p.tokens.atComment = true
 			continue
 		}
 
 		if p.stream.isLineEnd() {
-			if p.isAtValue() {
+			if p.tokens.atValue {
 				p.saveVar()
 			}
 
-			p.startName()
+			p.tokens.atName = true
 
-			if p.isAtComment() {
-				p.stopComment()
+			if p.tokens.atComment {
+				p.tokens.atComment = false
 				continue
 			}
 
 			continue
 		}
 
-		if p.isAtComment() {
+		if p.tokens.atComment {
 			continue
 		}
 
 		if p.stream.isEqualSign() {
-			if p.isAtValue() {
-				p.appendToValue()
+			if p.tokens.atValue {
+				p.tokens.appendToValue(p.stream.current)
 			}
-			p.stopName()
-			p.startValue()
+			p.tokens.atName = false
+			p.tokens.atValue = true
 			continue
 		}
 
-		if p.isAtName() {
+		if p.tokens.atName {
 			if p.stream.isSpace() {
 				continue
 			}
-			p.appendToName()
+			p.tokens.appendToName(p.stream.current)
 			continue
 		}
 
-		if p.isAtValue() {
-			p.appendToValue()
+		if p.tokens.atValue {
+			p.tokens.appendToValue(p.stream.current)
 		}
 	}
 
 	return nil
 }
 
-func (p *Parser) isAtComment() bool {
-	return p.atComment
-}
-
-func (p *Parser) startComment() {
-	p.atComment = true
-}
-
-func (p *Parser) stopComment() {
-	p.atComment = false
-}
-
-func (p *Parser) isAtName() bool {
-	return p.atName
-}
-
-func (p *Parser) startName() {
-	p.atName = true
-}
-
-func (p *Parser) stopName() {
-	p.atName = false
-}
-
-func (p *Parser) isAtValue() bool {
-	return p.atValue
-}
-
-func (p *Parser) startValue() {
-	p.atValue = true
-}
-
-func (p *Parser) stopValue() {
-	p.atValue = false
-}
-
-func (p *Parser) appendToName() {
-	p.name = append(p.name, byte(p.stream.r))
-}
-
-func (p *Parser) appendToValue() {
-	p.value = append(p.value, byte(p.stream.r))
-}
-
 func (p *Parser) saveVar() {
-	p.vars[string(p.name)] = varValue(p.value)
-	p.name = nil
-	p.value = nil
-	p.atValue = false
+	p.vars[string(p.tokens.name)] = varValue(p.tokens.value)
+	p.tokens.name = nil
+	p.tokens.value = nil
+	p.tokens.atValue = false
 }
 
 func varValue(v []byte) string {
