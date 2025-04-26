@@ -45,32 +45,26 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 	vars := make(map[string]string)
 
 	for i := 0; i < len(files); i++ {
-		f, err := os.Open(files[i])
+		file, err := os.Open(files[i])
 		if err != nil {
-			return fmt.Errorf("config: %s", err)
+			return fmt.Errorf("config: %w", err)
 		}
 
-		err = parser.Parse(f, vars)
-
-		if err != nil {
-			if e := f.Close(); e != nil {
-				return fmt.Errorf("config: %s", e)
-			}
-			return fmt.Errorf("config: %s", err)
+		if err = parser.Parse(file, vars); err != nil {
+			file.Close()
+			return fmt.Errorf("config: %w", err)
 		}
 
-		if err = f.Close(); err != nil {
-			return fmt.Errorf("config: %s", err)
-		}
+		file.Close()
 	}
 
 	parser.Interpolate(vars)
 
-	f := func(s string) string {
-		return vars[s]
+	if err := converter.ConvertIntoStruct(l.i, func(s string) string { return vars[s] }); err != nil {
+		return fmt.Errorf("config: %w", err)
 	}
 
-	return converter.ConvertIntoStruct(l.i, f)
+	return nil
 }
 
 // Bytes loads config into struct from byte array
@@ -85,21 +79,21 @@ func (l *Loader[T]) String(input string) error {
 
 // JSON loads config into struct from json
 func (l *Loader[T]) JSON(input json.RawMessage) error {
-	return json.Unmarshal(input, l.i)
+	if err := json.Unmarshal(input, l.i); err != nil {
+		return fmt.Errorf("config: %w", err)
+	}
+
+	return nil
 }
 
 func fromBytes[T any](i T, input []byte) error {
 	vars := make(map[string]string)
 
 	if err := parser.Parse(bytes.NewReader(input), vars); err != nil {
-		return err
+		return fmt.Errorf("config: %w", err)
 	}
 
 	parser.Interpolate(vars)
 
-	f := func(s string) string {
-		return vars[s]
-	}
-
-	return converter.ConvertIntoStruct(i, f)
+	return converter.ConvertIntoStruct(i, func(s string) string { return vars[s] })
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/andreiavrammsd/config"
 )
 
-type Config struct {
+type Configuration struct {
 	Username string `env:"USERNAME"`
 	Tag      string `env:"TAG" default:"none"`
 }
@@ -18,7 +18,7 @@ func ExampleLoader_Env() {
 		log.Fatal(err)
 	}
 
-	cfg := Config{}
+	cfg := Configuration{}
 	if err := config.Load(&cfg).Env(); err != nil {
 		log.Fatalf("cannot load config: %s", err)
 	}
@@ -34,7 +34,7 @@ func ExampleLoader_Env() {
 func ExampleLoader_Bytes() {
 	input := []byte(`USERNAME=msd # username`)
 
-	cfg := Config{}
+	cfg := Configuration{}
 	if err := config.Load(&cfg).Bytes(input); err != nil {
 		log.Fatalf("cannot load config: %s", err)
 	}
