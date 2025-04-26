@@ -2,7 +2,6 @@ package converter
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -15,7 +14,9 @@ const (
 
 type ReadValue = func(string) string
 
-func ConvertIntoStruct[T any](i T, data ReadValue) error {
+// ConvertIntoStruct take a pointer to a struct and, for each property in the struct (recursively),
+// generates a key that it passes to the given readValue function which must return the value for the property.
+func ConvertIntoStruct[T any](i T, readValue ReadValue) error {
 	typ := reflect.TypeOf(i)
 
 	if typ.Kind() != reflect.Ptr {
@@ -30,11 +31,7 @@ func ConvertIntoStruct[T any](i T, data ReadValue) error {
 		return errors.New("nil struct passed")
 	}
 
-	if err := parse(typ, reflect.ValueOf(i), data, ""); err != nil {
-		return fmt.Errorf("%s", err)
-	}
-
-	return nil
+	return parse(typ, reflect.ValueOf(i), readValue, "")
 }
 
 func parse(typ reflect.Type, val reflect.Value, readValue ReadValue, path string) error {
@@ -45,12 +42,13 @@ func parse(typ reflect.Type, val reflect.Value, readValue ReadValue, path string
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
 
-		path += field.Name + "_"
-
 		if val.Kind() == reflect.Ptr {
 			val = val.Elem()
 		}
 
+		path += field.Name + "_"
+
+		// Parse struct recursively.
 		if field.Type.Kind() == reflect.Struct {
 			if err := parse(field.Type, val.Field(i), readValue, path); err != nil {
 				return err
@@ -58,43 +56,53 @@ func parse(typ reflect.Type, val reflect.Value, readValue ReadValue, path string
 			path = ""
 		}
 
-		value := value(&field, readValue, path)
-
-		if value == "" {
-			value = defaultValue(&field)
-		}
-
+		value := getValue(&field, readValue, path)
 		if value == "" {
 			continue
 		}
-		path = ""
 
-		fieldValue := val.Field(i)
-		if err := setFieldValue(&field, fieldValue, value); err != nil {
+		if err := setFieldValue(&field, val.Field(i), value); err != nil {
 			return err
 		}
+
+		// After value is set, start again with a new property.
+		path = ""
 	}
 
 	return nil
 }
 
-func value(field *reflect.StructField, readValue ReadValue, path string) string {
-	value := readValue(key(field, path))
+func getValue(field *reflect.StructField, readValue ReadValue, path string) (value string) {
+	// Generate key and read value.
+	key := generateKey(field, path)
+	value = readValue(key)
+
+	// If empty, read value from field name.
 	if value == "" {
 		value = readValue(field.Name)
 	}
-	return value
+
+	// If empty, get default.
+	if value == "" {
+		value = getDefaultValue(field)
+	}
+
+	return
 }
 
-func key(field *reflect.StructField, path string) string {
-	key := field.Tag.Get(tag)
+func generateKey(field *reflect.StructField, path string) (key string) {
+	// Get configured key.
+	key = field.Tag.Get(tag)
+
+	// If empty, generate from path (path is property name or struct name + property name).
 	if key == "" {
 		key = strings.ToUpper(strings.TrimSuffix(path, "_"))
 	}
-	return key
+
+	return
 }
 
-func defaultValue(field *reflect.StructField) string {
+func getDefaultValue(field *reflect.StructField) string {
 	return field.Tag.Get(defaultValueTag)
 }
 
