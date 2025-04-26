@@ -17,7 +17,7 @@ func TestEnvFileWithParserErrorAtEnvFile(t *testing.T) {
 	loader := &Loader[Config]{
 		i:          actual,
 		dotEnvFile: ".env",
-		parse:      func(r io.Reader, vars map[string]string) error { return errors.New("parser error with env file") },
+		parse:      func(_ io.Reader, _ map[string]string) error { return errors.New("parser error with env file") },
 		convert:    converter.ConvertIntoStruct[Config],
 	}
 
@@ -38,7 +38,7 @@ func TestEnvFileWithParserErrorBytes(t *testing.T) {
 	loader := &Loader[Config]{
 		i:          actual,
 		dotEnvFile: ".env",
-		parse:      func(r io.Reader, vars map[string]string) error { return errors.New("parser error with bytes") },
+		parse:      func(_ io.Reader, _ map[string]string) error { return errors.New("parser error with bytes") },
 		convert:    converter.ConvertIntoStruct[Config],
 	}
 
@@ -60,7 +60,7 @@ func TestEnvFileWithConverterError(t *testing.T) {
 		i:          actual,
 		dotEnvFile: ".env",
 		parse:      parser.New().Parse,
-		convert: func(i Config, data func(string) string) error {
+		convert: func(_ Config, _ func(string) string) error {
 			return errors.New("converter error")
 		},
 	}

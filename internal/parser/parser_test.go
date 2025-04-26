@@ -123,7 +123,7 @@ func TestParseWithEOF(t *testing.T) {
 type errReader struct {
 }
 
-func (e *errReader) Read(p []byte) (n int, err error) {
+func (e *errReader) Read(_ []byte) (n int, err error) {
 	err = errors.New("reader error")
 	return
 }

@@ -12,7 +12,7 @@ type config struct {
 	SDefault string `default:"default value"`
 
 	I8      int8 `env:"integer_8"`
-	I16_    int16
+	I16     int16
 	I32     int32
 	I64     int64
 	Integer int
@@ -41,7 +41,7 @@ func readValue(s string) string {
 	vars["SDefault"] = ""
 
 	vars["integer_8"] = "-8"
-	vars["I16_"] = "-16"
+	vars["I16"] = "-16"
 	vars["I32"] = "-32"
 	vars["I64"] = "-64"
 	vars["Integer"] = "-999"
@@ -84,7 +84,7 @@ func TestConvertIntoStruct(t *testing.T) {
 	assertEqual(t, i.SDefault, "default value")
 
 	assertEqual(t, i.I8, -8)
-	assertEqual(t, i.I16_, -16)
+	assertEqual(t, i.I16, -16)
 	assertEqual(t, i.I32, -32)
 	assertEqual(t, i.I64, -64)
 	assertEqual(t, i.Integer, -999)
@@ -120,7 +120,7 @@ func TestConvertIntoStructWithValue(t *testing.T) {
 }
 
 func TestConvertIntoStructWithNonStruct(t *testing.T) {
-	var i *int = nil
+	var i *int
 
 	err := converter.ConvertIntoStruct(i, readValue)
 
@@ -134,7 +134,7 @@ func TestConvertIntoStructWithNonStruct(t *testing.T) {
 }
 
 func TestConvertIntoStructWithNilStruct(t *testing.T) {
-	var i *struct{} = nil
+	var i *struct{}
 
 	err := converter.ConvertIntoStruct(i, readValue)
 
