@@ -23,12 +23,12 @@ import (
 )
 
 type Config struct {
-	Username string `env:"USERNAME"`
-	Tag      string `env:"TAG" default:"none"`
+	Username string `env:"CUSTOM_USERNAME_TAG"`
+	Tag      string `default:"none"`
 }
 
 func main() {
-	input := []byte(`USERNAME=msd # username`)
+	input := []byte(`CUSTOM_USERNAME_TAG=msd # username`)
 
 	cfg := Config{}
 	if err := config.Load(&cfg).Bytes(input); err != nil {
