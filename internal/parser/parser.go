@@ -95,7 +95,6 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			if p.tokens.atValue {
 				p.saveVar()
 			}
-
 			p.tokens.atName = false
 			p.tokens.atComment = true
 
@@ -103,7 +102,6 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			if p.tokens.atValue {
 				p.saveVar()
 			}
-
 			p.tokens.atName = true
 			p.tokens.atComment = false
 
