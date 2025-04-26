@@ -18,19 +18,19 @@ func (s *Stream) advance() (err error) {
 	return
 }
 
-func (s *Stream) isCommentBegin() bool {
+func (s *Stream) isAtCommentBegin() bool {
 	return s.current == '#'
 }
 
-func (s *Stream) isLineEnd() bool {
+func (s *Stream) isAtLineEnd() bool {
 	return s.current == '\n' || s.current == '\r'
 }
 
-func (s *Stream) isEqualSign() bool {
+func (s *Stream) isAtEqualSign() bool {
 	return s.current == '='
 }
 
-func (s *Stream) isSpace() bool {
+func (s *Stream) isAtSpace() bool {
 	return unicode.IsSpace(s.current)
 }
 
@@ -91,7 +91,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 		case err != nil:
 			return err
 
-		case p.stream.isCommentBegin():
+		case p.stream.isAtCommentBegin():
 			if p.tokens.atValue {
 				p.saveVar()
 			}
@@ -99,7 +99,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			p.tokens.atName = false
 			p.tokens.atComment = true
 
-		case p.stream.isLineEnd():
+		case p.stream.isAtLineEnd():
 			if p.tokens.atValue {
 				p.saveVar()
 			}
@@ -110,7 +110,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 		case p.tokens.atComment:
 			continue
 
-		case p.stream.isEqualSign():
+		case p.stream.isAtEqualSign():
 			if p.tokens.atValue {
 				p.tokens.appendToValue(p.stream.current)
 			}
@@ -118,7 +118,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			p.tokens.atValue = true
 
 		case p.tokens.atName:
-			if !p.stream.isSpace() {
+			if !p.stream.isAtSpace() {
 				p.tokens.appendToName(p.stream.current)
 			}
 
