@@ -73,14 +73,15 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 		err := p.stream.advance()
 
 		switch {
-		case err != nil:
-			if err == io.EOF {
-				if p.tokens.atValue {
-					p.saveVar()
-				}
-				return nil
+		case err == io.EOF:
+			if p.tokens.atValue {
+				p.saveVar()
 			}
+			return nil
+
+		case err != nil:
 			return err
+
 		case p.stream.isCommentBegin():
 			if p.tokens.atValue {
 				p.saveVar()
