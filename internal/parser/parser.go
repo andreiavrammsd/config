@@ -126,15 +126,21 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 	}
 }
 
+// saveVar stores the variable name and its value,
+// and sets tokens to start scanning for a new variable.
 func (p *Parser) saveVar() {
-	p.vars[string(p.tokens.name)] = varValue(p.tokens.value)
+	p.vars[string(p.tokens.name)] = cleanVarValue(p.tokens.value)
 	p.tokens.name = nil
 	p.tokens.value = nil
 	p.tokens.atValue = false
 }
 
-func varValue(v []byte) string {
+func cleanVarValue(v []byte) string {
 	return string(bytes.Trim(bytes.TrimSpace(v), `"'`))
+}
+
+func New() *Parser {
+	return &Parser{}
 }
 
 func Interpolate(vars map[string]string) {
@@ -196,10 +202,6 @@ func Interpolate(vars map[string]string) {
 
 		vars[k] = string(newValue)
 	}
-}
-
-func New() *Parser {
-	return &Parser{}
 }
 
 func isAtVar(v string, i int) (atVar bool) {
