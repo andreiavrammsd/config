@@ -62,10 +62,10 @@ const testdata_file string = "testdata/.env"
 
 func TestEnvFile(t *testing.T) {
 	// Temporarily switch to testdata directory to read .env by default
-	cwd, _ := os.Getwd()
-	os.Chdir("testdata")
+	cwd, _ := os.Getwd() // nolint:errcheck
+	os.Chdir("testdata") // nolint:errcheck
 	defer func() {
-		os.Chdir(cwd)
+		os.Chdir(cwd) // nolint:errcheck
 	}()
 
 	_, expected, err := testdata(".env")
