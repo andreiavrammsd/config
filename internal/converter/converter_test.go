@@ -112,7 +112,7 @@ func TestConvertIntoStructWithValue(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: value passed instead of reference" {
+	if err.Error() != "value passed instead of reference" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -126,7 +126,7 @@ func TestConvertIntoStructWithNonStruct(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: non struct passed" {
+	if err.Error() != "non struct passed" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -140,7 +140,7 @@ func TestConvertIntoStructWithNilStruct(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: nil struct passed" {
+	if err.Error() != "nil struct passed" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -160,7 +160,7 @@ func TestConvertIntoStructWithIntParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: strconv.ParseInt: parsing \"invalid int value\": invalid syntax" {
+	if err.Error() != "strconv.ParseInt: parsing \"invalid int value\": invalid syntax" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -180,7 +180,7 @@ func TestConvertIntoStructWithUintParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: strconv.ParseUint: parsing \"invalid uint value\": invalid syntax" {
+	if err.Error() != "strconv.ParseUint: parsing \"invalid uint value\": invalid syntax" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -200,7 +200,7 @@ func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: strconv.ParseFloat: parsing \"invalid float32 value\": invalid syntax" {
+	if err.Error() != "strconv.ParseFloat: parsing \"invalid float32 value\": invalid syntax" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -220,7 +220,7 @@ func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: strconv.ParseFloat: parsing \"invalid float64 value\": invalid syntax" {
+	if err.Error() != "strconv.ParseFloat: parsing \"invalid float64 value\": invalid syntax" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -240,7 +240,7 @@ func TestConvertIntoStructWithBoolParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: strconv.ParseBool: parsing \"invalid bool value\": invalid syntax" {
+	if err.Error() != "strconv.ParseBool: parsing \"invalid bool value\": invalid syntax" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -264,7 +264,7 @@ func TestConvertIntoStructWithInnerStructParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: strconv.ParseInt: parsing \"invalid struct integer value\": invalid syntax" {
+	if err.Error() != "strconv.ParseInt: parsing \"invalid struct integer value\": invalid syntax" {
 		t.Fatal("incorrect error message:", err)
 	}
 }

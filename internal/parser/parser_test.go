@@ -140,7 +140,7 @@ func TestParseWithReaderError(t *testing.T) {
 		t.Error("expected reader error")
 	}
 
-	if err.Error() != "config: cannot read from input (reader error)" {
+	if err.Error() != "cannot read from input (reader error)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }

@@ -19,19 +19,19 @@ func ConvertIntoStruct[T any](i T, data getValue) error {
 	typ := reflect.TypeOf(i)
 
 	if typ.Kind() != reflect.Ptr {
-		return errors.New("config: value passed instead of reference")
+		return errors.New("value passed instead of reference")
 	}
 
 	if typ.Elem().Kind() != reflect.Struct {
-		return errors.New("config: non struct passed")
+		return errors.New("non struct passed")
 	}
 
 	if reflect.ValueOf(i).IsNil() {
-		return errors.New("config: nil struct passed")
+		return errors.New("nil struct passed")
 	}
 
 	if err := parse(typ, reflect.ValueOf(i), data, ""); err != nil {
-		return fmt.Errorf("config: %s", err)
+		return fmt.Errorf("%s", err)
 	}
 
 	return nil

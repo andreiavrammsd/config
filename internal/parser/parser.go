@@ -28,7 +28,7 @@ func Parse(r io.Reader, vars map[string]string) error {
 				break
 			}
 
-			return fmt.Errorf("config: cannot read from input (%s)", err)
+			return fmt.Errorf("cannot read from input (%s)", err)
 		}
 
 		if r == '#' {
