@@ -59,7 +59,7 @@ func TestEnvFileWithConverterError(t *testing.T) {
 	loader := &Loader[Config]{
 		i:          actual,
 		dotEnvFile: ".env",
-		parse:      parser.Parse,
+		parse:      parser.New().Parse,
 		convert: func(i Config, data func(string) string) error {
 			return errors.New("converter error")
 		},

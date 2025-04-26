@@ -33,7 +33,7 @@ func Load[T any](config T) *Loader[T] {
 	return &Loader[T]{
 		i:          config,
 		dotEnvFile: ".env",
-		parse:      parser.Parse,
+		parse:      parser.New().Parse,
 		convert:    converter.ConvertIntoStruct[T],
 	}
 }

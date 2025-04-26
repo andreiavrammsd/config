@@ -56,7 +56,7 @@ func assertEqual(t *testing.T, actual, expected string) {
 func TestParse(t *testing.T) {
 	reader := bytes.NewReader([]byte(environment))
 	vars := make(map[string]string)
-	err := parser.Parse(reader, vars)
+	err := parser.New().Parse(reader, vars)
 
 	if err != nil {
 		t.Error("expected no error")
@@ -111,7 +111,7 @@ func (e *eofReader) Read(p []byte) (n int, err error) {
 
 func TestParseWithEOF(t *testing.T) {
 	vars := make(map[string]string)
-	err := parser.Parse(&eofReader{"a=b", 0}, vars)
+	err := parser.New().Parse(&eofReader{"a=b", 0}, vars)
 
 	if err != nil {
 		t.Error("expected no error")
@@ -130,7 +130,7 @@ func (e *errReader) Read(p []byte) (n int, err error) {
 
 func TestParseWithReaderError(t *testing.T) {
 	vars := make(map[string]string)
-	err := parser.Parse(&errReader{}, vars)
+	err := parser.New().Parse(&errReader{}, vars)
 
 	if len(vars) > 0 {
 		t.Error("expected empty map")
@@ -140,13 +140,14 @@ func TestParseWithReaderError(t *testing.T) {
 		t.Error("expected reader error")
 	}
 
-	if err.Error() != "cannot read from input (reader error)" {
+	if err.Error() != "reader error" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
 
-// Benchmark_Parse-8        1934143               606.9 ns/op          4096 B/op          1 allocs/op
+// Benchmark_Parse-8                1913996               618.2 ns/op          4192 B/op          2 allocs/op
 func Benchmark_Parse(b *testing.B) {
+	p := parser.New()
 	reader := bytes.NewReader([]byte(environment))
 	vars := make(map[string]string)
 
@@ -154,7 +155,7 @@ func Benchmark_Parse(b *testing.B) {
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		err := parser.Parse(reader, vars)
+		err := p.Parse(reader, vars)
 		if err != nil {
 			b.Fatal(err)
 		}

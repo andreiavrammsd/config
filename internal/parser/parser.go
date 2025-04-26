@@ -3,92 +3,183 @@ package parser
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"strings"
 	"unicode"
 )
 
-func Parse(r io.Reader, vars map[string]string) error {
-	reader := bufio.NewReader(r)
+type Parser struct {
+	vars map[string]string
 
-	var name, value []byte
+	name  []byte
+	value []byte
 
-	atName := true
-	atValue := false
-	atComment := false
+	atName    bool
+	atValue   bool
+	atComment bool
+
+	r   rune
+	err error
+
+	reader *bufio.Reader
+}
+
+func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
+	p.vars = vars
+
+	p.name = nil
+	p.value = nil
+	p.startName()
+	p.stopValue()
+	p.stopComment()
+
+	p.reader = bufio.NewReader(r)
 
 	for {
-		r, _, err := reader.ReadRune()
-		if err != nil {
-			if err == io.EOF {
-				if atValue {
-					vars[string(name)] = varValue(value)
+		p.next()
+
+		if p.isError() {
+			if p.isAtReaderEnd() {
+				if p.isAtValue() {
+					p.saveVar()
 				}
 				break
 			}
 
-			return fmt.Errorf("cannot read from input (%s)", err)
+			return p.err
 		}
 
-		if r == '#' {
-			if atValue {
-				vars[string(name)] = varValue(value)
+		if p.isCommentBegin() {
+			if p.isAtValue() {
+				p.saveVar()
 			}
 
-			name = nil
-			value = nil
-			atName = false
-			atValue = false
-			atComment = true
+			p.stopName()
+			p.startComment()
 			continue
 		}
 
-		if r == '\n' || r == '\r' {
-			if atValue {
-				vars[string(name)] = varValue(value)
+		if p.isLineEnd() {
+			if p.isAtValue() {
+				p.saveVar()
 			}
 
-			name = nil
-			value = nil
-			atName = true
-			atValue = false
+			p.startName()
 
-			if atComment {
-				atComment = false
+			if p.isAtComment() {
+				p.stopComment()
 				continue
 			}
 
 			continue
 		}
 
-		if atComment {
+		if p.isAtComment() {
 			continue
 		}
 
-		if r == '=' {
-			if atValue {
-				value = append(value, byte(r))
+		if p.isEqualSign() {
+			if p.isAtValue() {
+				p.appendToValue()
 			}
-			atName = false
-			atValue = true
+			p.stopName()
+			p.startValue()
 			continue
 		}
 
-		if atName {
-			if unicode.IsSpace(r) {
+		if p.isAtName() {
+			if p.isSpace() {
 				continue
 			}
-			name = append(name, byte(r))
+			p.appendToName()
 			continue
 		}
 
-		if atValue {
-			value = append(value, byte(r))
+		if p.isAtValue() {
+			p.appendToValue()
 		}
 	}
 
 	return nil
+}
+
+func (p *Parser) next() {
+	p.r, _, p.err = p.reader.ReadRune()
+}
+
+func (p *Parser) isError() bool {
+	return p.err != nil
+}
+
+func (p *Parser) isAtReaderEnd() bool {
+	return p.err == io.EOF
+}
+
+func (p *Parser) isCommentBegin() bool {
+	return p.r == '#'
+}
+
+func (p *Parser) isLineEnd() bool {
+	return p.r == '\n' || p.r == '\r'
+}
+
+func (p *Parser) isAtComment() bool {
+	return p.atComment
+}
+
+func (p *Parser) startComment() {
+	p.atComment = true
+}
+
+func (p *Parser) stopComment() {
+	p.atComment = false
+}
+
+func (p *Parser) isEqualSign() bool {
+	return p.r == '='
+}
+
+func (p *Parser) isAtName() bool {
+	return p.atName
+}
+
+func (p *Parser) startName() {
+	p.atName = true
+}
+
+func (p *Parser) stopName() {
+	p.atName = false
+}
+
+func (p *Parser) isAtValue() bool {
+	return p.atValue
+}
+
+func (p *Parser) startValue() {
+	p.atValue = true
+}
+
+func (p *Parser) stopValue() {
+	p.atValue = false
+}
+
+func (p *Parser) appendToName() {
+	p.name = append(p.name, byte(p.r))
+}
+
+func (p *Parser) appendToValue() {
+	p.value = append(p.value, byte(p.r))
+}
+
+func (p *Parser) isSpace() bool {
+	return unicode.IsSpace(p.r)
+}
+
+func (p *Parser) saveVar() {
+	p.vars[string(p.name)] = varValue(p.value)
+	p.name = nil
+	p.value = nil
+	p.atValue = false
 }
 
 func varValue(v []byte) string {
@@ -154,6 +245,10 @@ func Interpolate(vars map[string]string) {
 
 		vars[k] = string(newValue)
 	}
+}
+
+func New() *Parser {
+	return &Parser{}
 }
 
 func isAtVar(v string, i int) (atVar bool) {
