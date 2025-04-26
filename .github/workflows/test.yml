@@ -2,8 +2,9 @@ name: Test
 
 on:
   push:
+    branches:
+      - master
   pull_request:
-    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
@@ -17,8 +18,8 @@ jobs:
       matrix:
         config:
           - {
-            name: "Go 1.12.x",
-            version: "1.12.x",
+            name: "Go 1.18.x",
+            version: "1.18.x",
           }
           - {
             name: "Go 1.x",
