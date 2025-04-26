@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/andreiavrammsd/config/internal/converter"
+	"github.com/andreiavrammsd/config/internal/interpolater"
 	"github.com/andreiavrammsd/config/internal/parser"
 )
 
@@ -63,6 +64,7 @@ func TestEnvFileWithConverterError(t *testing.T) {
 		convert: func(_ Config, _ func(string) string) error {
 			return errors.New("converter error")
 		},
+		interpolater: interpolater.New(),
 	}
 
 	err := loader.EnvFile("testdata/.env")

@@ -23,19 +23,21 @@ import (
 
 // Loader provides methods to load configuration values into a struct.
 type Loader[T any] struct {
-	i          T
-	dotEnvFile string
-	parse      func(r io.Reader, vars map[string]string) error
-	convert    func(i T, data func(string) string) error
+	i            T
+	dotEnvFile   string
+	parse        func(r io.Reader, vars map[string]string) error
+	convert      func(i T, data func(string) string) error
+	interpolater *interpolater.Interpolater
 }
 
 // Load creates a Loader with given struct.
 func Load[T any](config T) *Loader[T] {
 	return &Loader[T]{
-		i:          config,
-		dotEnvFile: ".env",
-		parse:      parser.New().Parse,
-		convert:    converter.ConvertIntoStruct[T],
+		i:            config,
+		dotEnvFile:   ".env",
+		parse:        parser.New().Parse,
+		convert:      converter.ConvertIntoStruct[T],
+		interpolater: interpolater.New(),
 	}
 }
 
@@ -67,7 +69,7 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 		file.Close()
 	}
 
-	(&interpolater.Interpolater{}).Interpolate(vars)
+	l.interpolater.Interpolate(vars)
 
 	if err := l.convert(l.i, func(s string) string { return vars[s] }); err != nil {
 		return fmt.Errorf("config: %w", err)
@@ -103,7 +105,7 @@ func (l *Loader[T]) fromBytes(input []byte) error {
 		return fmt.Errorf("config: %w", err)
 	}
 
-	(&interpolater.Interpolater{}).Interpolate(vars)
+	l.interpolater.Interpolate(vars)
 
 	return l.convert(l.i, func(s string) string { return vars[s] })
 }

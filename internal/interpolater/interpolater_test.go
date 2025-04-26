@@ -30,7 +30,7 @@ func TestInterpolate(t *testing.T) {
 	vars["MONGO_OTHER"] = "$A"
 	vars["INTERPOLATED"] = "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $"
 
-	(&interpolater.Interpolater{}).Interpolate(vars)
+	interpolater.New().Interpolate(vars)
 
 	assertEqual(t, vars["TIMEOUT"], "2000000000")
 	assertEqual(t, vars["ABC"], " string\\\" ")
@@ -67,7 +67,7 @@ func Benchmark_Interpolate(b *testing.B) {
 	vars["MONGO_OTHER"] = "$A"
 	vars["INTERPOLATED"] = "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $"
 
-	interpolater := &interpolater.Interpolater{}
+	interpolater := interpolater.New()
 
 	b.ReportAllocs()
 	b.ResetTimer()

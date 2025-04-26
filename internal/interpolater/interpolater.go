@@ -176,3 +176,7 @@ func (ip *Interpolater) appendCurrentCharacterToNewValue() {
 func (ip *Interpolater) appendAllToNewValue() {
 	ip.interpolatedVar.value = append(ip.interpolatedVar.value, []rune(ip.vars[string(ip.interpolatedVar.name)])...)
 }
+
+func New() *Interpolater {
+	return &Interpolater{}
+}
