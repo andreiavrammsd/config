@@ -8,7 +8,8 @@ import (
 
 type config struct {
 	S        string
-	SDefault string
+	SEmpty   string
+	SDefault string `default:"default value"`
 
 	I8      int8
 	I16     int16
@@ -79,7 +80,8 @@ func TestConvertIntoStruct(t *testing.T) {
 	}
 
 	assertEqual(t, i.S, "string")
-	assertEqual(t, i.SDefault, "")
+	assertEqual(t, i.SEmpty, "")
+	assertEqual(t, i.SDefault, "default value")
 
 	assertEqual(t, i.I8, -8)
 	assertEqual(t, i.I32, -32)
