@@ -26,8 +26,8 @@ type Loader[T any] struct {
 }
 
 // Load creates a Loader with given struct
-func Load[T any](i T) *Loader[T] {
-	return &Loader[T]{i: i, dotEnvFile: ".env"}
+func Load[T any](config T) *Loader[T] {
+	return &Loader[T]{i: config, dotEnvFile: ".env"}
 }
 
 // Env loads config into struct from environment variables
