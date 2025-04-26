@@ -13,9 +13,9 @@ const (
 	defaultValueTag = "default"
 )
 
-type getValue = func(string) string
+type ReadValue = func(string) string
 
-func ConvertIntoStruct[T any](i T, data getValue) error {
+func ConvertIntoStruct[T any](i T, data ReadValue) error {
 	typ := reflect.TypeOf(i)
 
 	if typ.Kind() != reflect.Ptr {
@@ -37,7 +37,7 @@ func ConvertIntoStruct[T any](i T, data getValue) error {
 	return nil
 }
 
-func parse(typ reflect.Type, val reflect.Value, getValue getValue, path string) error {
+func parse(typ reflect.Type, val reflect.Value, readValue ReadValue, path string) error {
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
@@ -52,13 +52,13 @@ func parse(typ reflect.Type, val reflect.Value, getValue getValue, path string) 
 		}
 
 		if field.Type.Kind() == reflect.Struct {
-			if err := parse(field.Type, val.Field(i), getValue, path); err != nil {
+			if err := parse(field.Type, val.Field(i), readValue, path); err != nil {
 				return err
 			}
 			path = ""
 		}
 
-		value := value(&field, getValue, path)
+		value := value(&field, readValue, path)
 
 		if value == "" {
 			value = defaultValue(&field)
@@ -78,10 +78,10 @@ func parse(typ reflect.Type, val reflect.Value, getValue getValue, path string) 
 	return nil
 }
 
-func value(field *reflect.StructField, getValue getValue, path string) string {
-	value := getValue(key(field, path))
+func value(field *reflect.StructField, readValue ReadValue, path string) string {
+	value := readValue(key(field, path))
 	if value == "" {
-		value = getValue(field.Name)
+		value = readValue(field.Name)
 	}
 	return value
 }
