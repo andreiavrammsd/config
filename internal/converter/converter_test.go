@@ -7,12 +7,12 @@ import (
 )
 
 type config struct {
-	S        string
+	S        string `env:"MyString"`
 	SEmpty   string
 	SDefault string `default:"default value"`
 
-	I8      int8
-	I16     int16
+	I8      int8 `env:"integer_8"`
+	I16_    int16
 	I32     int32
 	I64     int64
 	Integer int
@@ -37,11 +37,11 @@ type config struct {
 
 func getValue(s string) string {
 	vars := make(map[string]string)
-	vars["S"] = "string"
+	vars["MyString"] = "string"
 	vars["SDefault"] = ""
 
-	vars["I8"] = "-8"
-	vars["I16"] = "-16"
+	vars["integer_8"] = "-8"
+	vars["I16_"] = "-16"
 	vars["I32"] = "-32"
 	vars["I64"] = "-64"
 	vars["Integer"] = "-999"
@@ -84,11 +84,13 @@ func TestConvertIntoStruct(t *testing.T) {
 	assertEqual(t, i.SDefault, "default value")
 
 	assertEqual(t, i.I8, -8)
+	assertEqual(t, i.I16_, -16)
 	assertEqual(t, i.I32, -32)
 	assertEqual(t, i.I64, -64)
 	assertEqual(t, i.Integer, -999)
 
 	assertEqual(t, i.UI8, 8)
+	assertEqual(t, i.UI16, 16)
 	assertEqual(t, i.UI32, 32)
 	assertEqual(t, i.UI64, 64)
 	assertEqual(t, i.UnsignedInteger, 999)
