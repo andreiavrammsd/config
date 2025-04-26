@@ -23,6 +23,8 @@ linters:
     - unused
     - ineffassign
     - errcheck
+    - godot
+    - revive
   settings:
     dupl:
       threshold: 100

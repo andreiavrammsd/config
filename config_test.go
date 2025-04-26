@@ -58,7 +58,7 @@ type envFile struct {
 	Config
 }
 
-const testdata_file string = "testdata/.env"
+const testdataFile string = "testdata/.env"
 
 func TestEnvFile(t *testing.T) {
 	// Temporarily switch to testdata directory to read .env by default
@@ -84,7 +84,7 @@ func TestEnvFile(t *testing.T) {
 }
 
 func TestEnvFileWithCustomEnvFiles(t *testing.T) {
-	_, ex, err := testdata(testdata_file)
+	_, ex, err := testdata(testdataFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +131,7 @@ func TestEnvFileWithMultipleFilesOneMissing(t *testing.T) {
 }
 
 func TestBytes(t *testing.T) {
-	input, expected, err := testdata(testdata_file)
+	input, expected, err := testdata(testdataFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -147,7 +147,7 @@ func TestBytes(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	input, expected, err := testdata(testdata_file)
+	input, expected, err := testdata(testdataFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,7 +204,7 @@ func TestJson(t *testing.T) {
 	   "Default":"default value"
 	}`)
 
-	_, expected, err := testdata(testdata_file)
+	_, expected, err := testdata(testdataFile)
 	if err != nil {
 		t.Fatal(err)
 	}

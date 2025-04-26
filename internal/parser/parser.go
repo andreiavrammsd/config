@@ -3,96 +3,144 @@ package parser
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"strings"
 	"unicode"
 )
 
-func Parse(r io.Reader, vars map[string]string) error {
-	reader := bufio.NewReader(r)
-
-	var name, value []byte
-
-	atName := true
-	atValue := false
-	atComment := false
-
-	for {
-		r, _, err := reader.ReadRune()
-		if err != nil {
-			if err == io.EOF {
-				if atValue {
-					vars[string(name)] = varValue(value)
-				}
-				break
-			}
-
-			return fmt.Errorf("cannot read from input (%s)", err)
-		}
-
-		if r == '#' {
-			if atValue {
-				vars[string(name)] = varValue(value)
-			}
-
-			name = nil
-			value = nil
-			atName = false
-			atValue = false
-			atComment = true
-			continue
-		}
-
-		if r == '\n' || r == '\r' {
-			if atValue {
-				vars[string(name)] = varValue(value)
-			}
-
-			name = nil
-			value = nil
-			atName = true
-			atValue = false
-
-			if atComment {
-				atComment = false
-				continue
-			}
-
-			continue
-		}
-
-		if atComment {
-			continue
-		}
-
-		if r == '=' {
-			if atValue {
-				value = append(value, byte(r))
-			}
-			atName = false
-			atValue = true
-			continue
-		}
-
-		if atName {
-			if unicode.IsSpace(r) {
-				continue
-			}
-			name = append(name, byte(r))
-			continue
-		}
-
-		if atValue {
-			value = append(value, byte(r))
-		}
-	}
-
-	return nil
+type Stream struct {
+	reader  *bufio.Reader
+	current rune
 }
 
-func varValue(v []byte) string {
+func (s *Stream) advance() (err error) {
+	s.current, _, err = s.reader.ReadRune()
+	return
+}
+
+func (s *Stream) isAtCommentBegin() bool {
+	return s.current == '#'
+}
+
+func (s *Stream) isAtLineEnd() bool {
+	return s.current == '\n' || s.current == '\r'
+}
+
+func (s *Stream) isAtEqualSign() bool {
+	return s.current == '='
+}
+
+func (s *Stream) isAtSpace() bool {
+	return unicode.IsSpace(s.current)
+}
+
+type Tokens struct {
+	// the parser is in the variable name scope: `NAME=value #comment`
+	atName bool
+
+	// the actual variable name: `NAME=value #comment`
+	name []byte
+
+	// the parser is in the variable value scope: `name=VALUE #comment`
+	atValue bool
+
+	// the actual variable value: `name=VALUE #comment`
+	value []byte
+
+	// the parser is in the comment scope: `name=value # COMMENT`
+	atComment bool
+}
+
+// appendToName adds a rune to the name array to form the variable name.
+func (p *Tokens) appendToName(r rune) {
+	p.name = append(p.name, byte(r))
+}
+
+// appendToValue adds a rune to the value array to form the variable value.
+func (p *Tokens) appendToValue(r rune) {
+	p.value = append(p.value, byte(r))
+}
+
+type Parser struct {
+	vars   map[string]string
+	stream Stream
+	tokens Tokens
+}
+
+func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
+	p.stream = Stream{reader: bufio.NewReader(r)}
+	p.tokens = Tokens{
+		atName:    true,
+		name:      nil,
+		atValue:   false,
+		value:     nil,
+		atComment: false,
+	}
+	p.vars = vars
+
+	for {
+		err := p.stream.advance()
+
+		switch {
+		case err == io.EOF:
+			if p.tokens.atValue {
+				p.saveVar()
+			}
+			return nil
+
+		case err != nil:
+			return err
+
+		case p.stream.isAtCommentBegin():
+			if p.tokens.atValue {
+				p.saveVar()
+			}
+			p.tokens.atName = false
+			p.tokens.atComment = true
+
+		case p.stream.isAtLineEnd():
+			if p.tokens.atValue {
+				p.saveVar()
+			}
+			p.tokens.atName = true
+			p.tokens.atComment = false
+
+		case p.tokens.atComment:
+			continue
+
+		case p.stream.isAtEqualSign():
+			if p.tokens.atValue {
+				p.tokens.appendToValue(p.stream.current)
+			}
+			p.tokens.atName = false
+			p.tokens.atValue = true
+
+		case p.tokens.atName:
+			if !p.stream.isAtSpace() {
+				p.tokens.appendToName(p.stream.current)
+			}
+
+		case p.tokens.atValue:
+			p.tokens.appendToValue(p.stream.current)
+		}
+	}
+}
+
+// saveVar stores the variable name and its value,
+// and sets tokens to start scanning for a new variable.
+func (p *Parser) saveVar() {
+	p.vars[string(p.tokens.name)] = cleanVarValue(p.tokens.value)
+	p.tokens.name = nil
+	p.tokens.value = nil
+	p.tokens.atValue = false
+}
+
+func cleanVarValue(v []byte) string {
 	return string(bytes.Trim(bytes.TrimSpace(v), `"'`))
+}
+
+func New() *Parser {
+	return &Parser{}
 }
 
 func Interpolate(vars map[string]string) {
