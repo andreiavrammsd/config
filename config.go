@@ -20,7 +20,7 @@ import (
 	"github.com/andreiavrammsd/config/internal/parser"
 )
 
-// Loader provides methods to load configuration values into a struct
+// Loader provides methods to load configuration values into a struct.
 type Loader[T any] struct {
 	i          T
 	dotEnvFile string
@@ -28,7 +28,7 @@ type Loader[T any] struct {
 	convert    func(i T, data func(string) string) error
 }
 
-// Load creates a Loader with given struct
+// Load creates a Loader with given struct.
 func Load[T any](config T) *Loader[T] {
 	return &Loader[T]{
 		i:          config,
@@ -38,7 +38,7 @@ func Load[T any](config T) *Loader[T] {
 	}
 }
 
-// Env loads config into struct from environment variables
+// Env loads config into struct from environment variables.
 func (l *Loader[T]) Env() error {
 	return l.convert(l.i, os.Getenv)
 }
@@ -76,17 +76,17 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 
 }
 
-// Bytes loads config into struct from byte array
+// Bytes loads config into struct from byte array.
 func (l *Loader[T]) Bytes(input []byte) error {
 	return l.fromBytes(input)
 }
 
-// String loads config into struct from a string
+// String loads config into struct from a string.
 func (l *Loader[T]) String(input string) error {
 	return l.fromBytes([]byte(input))
 }
 
-// JSON loads config into struct from json
+// JSON loads config into struct from json.
 func (l *Loader[T]) JSON(input json.RawMessage) error {
 	if err := json.Unmarshal(input, l.i); err != nil {
 		return fmt.Errorf("config: %w", err)

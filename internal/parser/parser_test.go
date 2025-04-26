@@ -145,7 +145,7 @@ func TestParseWithReaderError(t *testing.T) {
 	}
 }
 
-// Benchmark_Parse-8                1913996               618.2 ns/op          4192 B/op          2 allocs/op
+// Benchmark_Parse-8                1913996               618.2 ns/op          4192 B/op          2 allocs/op.
 func Benchmark_Parse(b *testing.B) {
 	p := parser.New()
 	reader := bytes.NewReader([]byte(environment))
@@ -198,7 +198,7 @@ func TestInterpolate(t *testing.T) {
 	assertEqual(t, vars["INTERPOLATED"], "$B env_1 $ $B \\xx 6379 + $")
 }
 
-// Benchmark_Interpolate-8          2369497               495.0 ns/op            80 B/op          4 allocs/op
+// Benchmark_Interpolate-8          2369497               495.0 ns/op            80 B/op          4 allocs/op.
 func Benchmark_Interpolate(b *testing.B) {
 	vars := make(map[string]string)
 	vars["TIMEOUT"] = "2000000000"

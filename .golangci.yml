@@ -23,6 +23,7 @@ linters:
     - unused
     - ineffassign
     - errcheck
+    - godot
   settings:
     dupl:
       threshold: 100

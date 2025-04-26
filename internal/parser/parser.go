@@ -35,19 +35,28 @@ func (s *Stream) isSpace() bool {
 }
 
 type Tokens struct {
+	// the parser is in the variable name scope: `NAME=value #comment`
 	atName bool
-	name   []byte
 
+	// the actual variable name: `NAME=value #comment`
+	name []byte
+
+	// the parser is in the variable value scope: `name=VALUE #comment`
 	atValue bool
-	value   []byte
 
+	// the actual variable value: `name=VALUE #comment`
+	value []byte
+
+	// the parser is in the comment scope: `name=value # COMMENT`
 	atComment bool
 }
 
+// appendToName adds a rune to the name array to form the variable name.
 func (p *Tokens) appendToName(r rune) {
 	p.name = append(p.name, byte(r))
 }
 
+// appendToValue adds a rune to the value array to form the variable value.
 func (p *Tokens) appendToValue(r rune) {
 	p.value = append(p.value, byte(r))
 }
