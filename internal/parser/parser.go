@@ -8,6 +8,32 @@ import (
 	"unicode"
 )
 
+type Stream struct {
+	reader *bufio.Reader
+	r      rune
+}
+
+func (s *Stream) advance() (err error) {
+	s.r, _, err = s.reader.ReadRune()
+	return
+}
+
+func (s *Stream) isCommentBegin() bool {
+	return s.r == '#'
+}
+
+func (s *Stream) isLineEnd() bool {
+	return s.r == '\n' || s.r == '\r'
+}
+
+func (s *Stream) isEqualSign() bool {
+	return s.r == '='
+}
+
+func (s *Stream) isSpace() bool {
+	return unicode.IsSpace(s.r)
+}
+
 type Parser struct {
 	vars map[string]string
 
@@ -18,10 +44,7 @@ type Parser struct {
 	atValue   bool
 	atComment bool
 
-	r   rune
-	err error
-
-	reader *bufio.Reader
+	stream Stream
 }
 
 func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
@@ -33,23 +56,21 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 	p.stopValue()
 	p.stopComment()
 
-	p.reader = bufio.NewReader(r)
+	p.stream = Stream{reader: bufio.NewReader(r)}
 
 	for {
-		p.next()
-
-		if p.isError() {
-			if p.isAtReaderEnd() {
+		if err := p.stream.advance(); err != nil {
+			if err == io.EOF {
 				if p.isAtValue() {
 					p.saveVar()
 				}
 				break
 			}
 
-			return p.err
+			return err
 		}
 
-		if p.isCommentBegin() {
+		if p.stream.isCommentBegin() {
 			if p.isAtValue() {
 				p.saveVar()
 			}
@@ -59,7 +80,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			continue
 		}
 
-		if p.isLineEnd() {
+		if p.stream.isLineEnd() {
 			if p.isAtValue() {
 				p.saveVar()
 			}
@@ -78,7 +99,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			continue
 		}
 
-		if p.isEqualSign() {
+		if p.stream.isEqualSign() {
 			if p.isAtValue() {
 				p.appendToValue()
 			}
@@ -88,7 +109,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 		}
 
 		if p.isAtName() {
-			if p.isSpace() {
+			if p.stream.isSpace() {
 				continue
 			}
 			p.appendToName()
@@ -103,26 +124,6 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 	return nil
 }
 
-func (p *Parser) next() {
-	p.r, _, p.err = p.reader.ReadRune()
-}
-
-func (p *Parser) isError() bool {
-	return p.err != nil
-}
-
-func (p *Parser) isAtReaderEnd() bool {
-	return p.err == io.EOF
-}
-
-func (p *Parser) isCommentBegin() bool {
-	return p.r == '#'
-}
-
-func (p *Parser) isLineEnd() bool {
-	return p.r == '\n' || p.r == '\r'
-}
-
 func (p *Parser) isAtComment() bool {
 	return p.atComment
 }
@@ -133,10 +134,6 @@ func (p *Parser) startComment() {
 
 func (p *Parser) stopComment() {
 	p.atComment = false
-}
-
-func (p *Parser) isEqualSign() bool {
-	return p.r == '='
 }
 
 func (p *Parser) isAtName() bool {
@@ -164,15 +161,11 @@ func (p *Parser) stopValue() {
 }
 
 func (p *Parser) appendToName() {
-	p.name = append(p.name, byte(p.r))
+	p.name = append(p.name, byte(p.stream.r))
 }
 
 func (p *Parser) appendToValue() {
-	p.value = append(p.value, byte(p.r))
-}
-
-func (p *Parser) isSpace() bool {
-	return unicode.IsSpace(p.r)
+	p.value = append(p.value, byte(p.stream.r))
 }
 
 func (p *Parser) saveVar() {
