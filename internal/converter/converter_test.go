@@ -35,7 +35,7 @@ type config struct {
 	}
 }
 
-func getValue(s string) string {
+func readValue(s string) string {
 	vars := make(map[string]string)
 	vars["MyString"] = "string"
 	vars["SDefault"] = ""
@@ -73,7 +73,7 @@ func assertEqual[T comparable](t *testing.T, actual, expected T) {
 func TestConvertIntoStruct(t *testing.T) {
 	i := config{}
 
-	err := converter.ConvertIntoStruct(&i, getValue)
+	err := converter.ConvertIntoStruct(&i, readValue)
 
 	if err != nil {
 		t.Fatal("error not expected")
@@ -108,7 +108,7 @@ func TestConvertIntoStruct(t *testing.T) {
 func TestConvertIntoStructWithValue(t *testing.T) {
 	i := struct{}{}
 
-	err := converter.ConvertIntoStruct(i, getValue)
+	err := converter.ConvertIntoStruct(i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -122,7 +122,7 @@ func TestConvertIntoStructWithValue(t *testing.T) {
 func TestConvertIntoStructWithNonStruct(t *testing.T) {
 	var i *int = nil
 
-	err := converter.ConvertIntoStruct(i, getValue)
+	err := converter.ConvertIntoStruct(i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -136,7 +136,7 @@ func TestConvertIntoStructWithNonStruct(t *testing.T) {
 func TestConvertIntoStructWithNilStruct(t *testing.T) {
 	var i *struct{} = nil
 
-	err := converter.ConvertIntoStruct(i, getValue)
+	err := converter.ConvertIntoStruct(i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -150,13 +150,13 @@ func TestConvertIntoStructWithNilStruct(t *testing.T) {
 func TestConvertIntoStructWithIntParseError(t *testing.T) {
 	i := struct{ Value int }{}
 
-	getValue := func(s string) string {
+	readValue := func(s string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid int value"
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, getValue)
+	err := converter.ConvertIntoStruct(&i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -170,13 +170,13 @@ func TestConvertIntoStructWithIntParseError(t *testing.T) {
 func TestConvertIntoStructWithUintParseError(t *testing.T) {
 	i := struct{ Value uint }{}
 
-	getValue := func(s string) string {
+	readValue := func(s string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid uint value"
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, getValue)
+	err := converter.ConvertIntoStruct(&i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -190,13 +190,13 @@ func TestConvertIntoStructWithUintParseError(t *testing.T) {
 func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
 	i := struct{ Value float32 }{}
 
-	getValue := func(s string) string {
+	readValue := func(s string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid float32 value"
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, getValue)
+	err := converter.ConvertIntoStruct(&i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -210,13 +210,13 @@ func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
 func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
 	i := struct{ Value float64 }{}
 
-	getValue := func(s string) string {
+	readValue := func(s string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid float64 value"
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, getValue)
+	err := converter.ConvertIntoStruct(&i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -230,13 +230,13 @@ func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
 func TestConvertIntoStructWithBoolParseError(t *testing.T) {
 	i := struct{ Value bool }{}
 
-	getValue := func(s string) string {
+	readValue := func(s string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid bool value"
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, getValue)
+	err := converter.ConvertIntoStruct(&i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -254,13 +254,13 @@ func TestConvertIntoStructWithInnerStructParseError(t *testing.T) {
 		}
 	}{}
 
-	getValue := func(s string) string {
+	readValue := func(s string) string {
 		vars := make(map[string]string)
 		vars["STRUCT_INTEGER"] = "invalid struct integer value"
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&i, getValue)
+	err := converter.ConvertIntoStruct(&i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
