@@ -6,33 +6,33 @@ import (
 	"unicode"
 )
 
-type Stream struct {
+type stream struct {
 	reader  *bufio.Reader
 	current rune
 }
 
-func (s *Stream) advance() (err error) {
+func (s *stream) advance() (err error) {
 	s.current, _, err = s.reader.ReadRune()
 	return
 }
 
-func (s *Stream) isAtCommentBegin() bool {
+func (s *stream) isAtCommentBegin() bool {
 	return s.current == '#'
 }
 
-func (s *Stream) isAtLineEnd() bool {
+func (s *stream) isAtLineEnd() bool {
 	return s.current == '\n' || s.current == '\r'
 }
 
-func (s *Stream) isAtEqualSign() bool {
+func (s *stream) isAtEqualSign() bool {
 	return s.current == '='
 }
 
-func (s *Stream) isAtSpace() bool {
+func (s *stream) isAtSpace() bool {
 	return unicode.IsSpace(s.current)
 }
 
-type Tokens struct {
+type tokens struct {
 	// the parser is in the variable name scope: `NAME=value #comment`
 	atName bool
 
@@ -50,25 +50,25 @@ type Tokens struct {
 }
 
 // appendToName adds a rune to the name array to form the variable name.
-func (p *Tokens) appendToName(r rune) {
+func (p *tokens) appendToName(r rune) {
 	p.name = append(p.name, r)
 }
 
 // appendToValue adds a rune to the value array to form the variable value.
-func (p *Tokens) appendToValue(r rune) {
+func (p *tokens) appendToValue(r rune) {
 	p.value = append(p.value, r)
 }
 
 type Parser struct {
 	vars   map[string]string
-	stream Stream
-	tokens Tokens
+	stream stream
+	tokens tokens
 }
 
 // Parse consumes a reader and detects variables that it will add to the passed vars map.
 func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
-	p.stream = Stream{reader: bufio.NewReader(r)}
-	p.tokens = Tokens{
+	p.stream = stream{reader: bufio.NewReader(r)}
+	p.tokens = tokens{
 		atName:    true,
 		name:      nil,
 		atValue:   false,
