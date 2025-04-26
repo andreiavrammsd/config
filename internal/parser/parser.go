@@ -70,69 +70,52 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 	p.vars = vars
 
 	for {
-		if err := p.stream.advance(); err != nil {
+		err := p.stream.advance()
+
+		switch {
+		case err != nil:
 			if err == io.EOF {
 				if p.tokens.atValue {
 					p.saveVar()
 				}
-				break
+				return nil
 			}
-
 			return err
-		}
-
-		if p.stream.isCommentBegin() {
+		case p.stream.isCommentBegin():
 			if p.tokens.atValue {
 				p.saveVar()
 			}
 
 			p.tokens.atName = false
 			p.tokens.atComment = true
-			continue
-		}
 
-		if p.stream.isLineEnd() {
+		case p.stream.isLineEnd():
 			if p.tokens.atValue {
 				p.saveVar()
 			}
 
 			p.tokens.atName = true
+			p.tokens.atComment = false
 
-			if p.tokens.atComment {
-				p.tokens.atComment = false
-				continue
-			}
-
+		case p.tokens.atComment:
 			continue
-		}
 
-		if p.tokens.atComment {
-			continue
-		}
-
-		if p.stream.isEqualSign() {
+		case p.stream.isEqualSign():
 			if p.tokens.atValue {
 				p.tokens.appendToValue(p.stream.current)
 			}
 			p.tokens.atName = false
 			p.tokens.atValue = true
-			continue
-		}
 
-		if p.tokens.atName {
-			if p.stream.isSpace() {
-				continue
+		case p.tokens.atName:
+			if !p.stream.isSpace() {
+				p.tokens.appendToName(p.stream.current)
 			}
-			p.tokens.appendToName(p.stream.current)
-			continue
-		}
 
-		if p.tokens.atValue {
+		case p.tokens.atValue:
 			p.tokens.appendToValue(p.stream.current)
 		}
 	}
-
-	return nil
 }
 
 func (p *Parser) saveVar() {
