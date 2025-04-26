@@ -1,7 +1,7 @@
 .PHONY: all test bench lint coverage prepushhook
 
 COVER_PROFILE=coverage.txt
-GO111MODULE=on
+GOLANGCI_LINT_VERSION=2.1.5
 
 all: test lint
 
@@ -24,5 +24,8 @@ prepushhook:
 	echo '#!/bin/sh\n\nmake' > .git/hooks/pre-push && chmod +x .git/hooks/pre-push
 
 check-lint:
-	@[ $(shell which golangci-lint) ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
-		| sh -s -- -b $(shell go env GOPATH)/bin v1.51.2
+	@if ! golangci-lint version 2>/dev/null | grep -q "$(GOLANGCI_LINT_VERSION)"; then \
+		echo "Installing golangci-lint v$(GOLANGCI_LINT_VERSION)..."; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+			| sh -s -- -b $(shell go env GOPATH)/bin v$(GOLANGCI_LINT_VERSION); \
+	fi

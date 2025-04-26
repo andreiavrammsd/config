@@ -2,11 +2,10 @@ name: Test
 
 on:
   push:
+    branches:
+      - master
   pull_request:
-    branches: [ "master" ]
   workflow_dispatch:
-  schedule:
-    - cron: '0 18 1 * *'
 
 jobs:
 
@@ -19,8 +18,8 @@ jobs:
       matrix:
         config:
           - {
-            name: "Go 1.12.x",
-            version: "1.12.x",
+            name: "Go 1.18.x",
+            version: "1.18.x",
           }
           - {
             name: "Go 1.x",
@@ -28,12 +27,18 @@ jobs:
           }
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.config.version }}
 
+    - name: Lint
+      run: make lint
+
     - name: Test
-      run: make
+      run: make test
+
+    - name: Benchmark
+      run: make bench

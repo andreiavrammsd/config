@@ -2,8 +2,9 @@ name: Coverage
 
 on:
   push:
+    branches:
+      - master
   pull_request:
-    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
@@ -22,10 +23,10 @@ jobs:
           }
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.config.version }}
 
@@ -33,7 +34,7 @@ jobs:
       run: make coverage
 
     - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         files: coverage.txt
         token: ${{secrets.CODECOV_TOKEN}}

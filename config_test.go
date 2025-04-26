@@ -1,15 +1,18 @@
-package config
+package config_test
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/andreiavrammsd/config"
 )
+
+type Struct struct {
+	Field string
+}
 
 type Config struct {
 	Mongo struct {
@@ -50,56 +53,41 @@ type Config struct {
 	Default      string `default:"default value"`
 }
 
-type Struct struct {
-	Field string
+type envFile struct {
+	AAA string
+	Config
 }
 
-func TestEnv(t *testing.T) {
-	input, expected, err := testdata()
+const testdata_file string = "testdata/.env"
+
+func TestEnvFile(t *testing.T) {
+	// Temporarily switch to testdata directory to read .env by default
+	cwd, _ := os.Getwd() // nolint:errcheck
+	os.Chdir("testdata") // nolint:errcheck
+	defer func() {
+		os.Chdir(cwd) // nolint:errcheck
+	}()
+
+	_, expected, err := testdata(".env")
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	vars := make(map[string]string)
-	err = parseVars(bytes.NewReader(input), vars)
-	if err != nil {
-		t.Fatal(err)
-	}
-	interpolateVars(vars)
-
-	for k, v := range vars {
-		if err := os.Setenv(k, v); err != nil {
-			t.Fatalf(`cannot set env variable "%s" with value "%s": "%s"`, k, v, err)
-		}
 	}
 
 	actual := Config{}
-	if err := Load(&actual).Env(); err != nil {
+	if err := config.Load(&actual).EnvFile(); err != nil {
 		t.Fatal(err)
 	}
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("\nhave: %v\nwant: %v", actual, expected)
 	}
-
-	for k := range vars {
-		if err := os.Unsetenv(k); err != nil {
-			t.Fatal(err)
-		}
-	}
 }
 
-type envFile struct {
-	AAA string
-	Config
-}
-
-func TestEnvFile(t *testing.T) {
-	_, ex, err := testdata()
+func TestEnvFileWithCustomEnvFiles(t *testing.T) {
+	_, ex, err := testdata(testdata_file)
 	if err != nil {
 		t.Fatal(err)
 	}
-	file := "testdata/.env"
 
 	expected := envFile{
 		AAA:    "BBB",
@@ -107,7 +95,7 @@ func TestEnvFile(t *testing.T) {
 	}
 
 	actual := envFile{}
-	if err := Load(&actual).EnvFile(file, "testdata/.env2"); err != nil {
+	if err := config.Load(&actual).EnvFile("testdata/.env", "testdata/.env2"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -116,14 +104,40 @@ func TestEnvFile(t *testing.T) {
 	}
 }
 
+func TestEnvFileWithOneFileWhichIsMissing(t *testing.T) {
+	actual := envFile{}
+	err := config.Load(&actual).EnvFile("somefile")
+
+	if err == nil {
+		t.Fatal("error expected")
+	}
+
+	if err.Error() != "config: open somefile: no such file or directory" {
+		t.Fatal("incorrect error message:", err)
+	}
+}
+
+func TestEnvFileWithMultipleFilesOneMissing(t *testing.T) {
+	actual := envFile{}
+	err := config.Load(&actual).EnvFile("testdata/.env", "someotherfile", "testdata/.env2")
+
+	if err == nil {
+		t.Fatal("error expected")
+	}
+
+	if err.Error() != "config: open someotherfile: no such file or directory" {
+		t.Fatal("incorrect error message:", err)
+	}
+}
+
 func TestBytes(t *testing.T) {
-	input, expected, err := testdata()
+	input, expected, err := testdata(testdata_file)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	actual := Config{}
-	if err := Load(&actual).Bytes(input); err != nil {
+	if err := config.Load(&actual).Bytes(input); err != nil {
 		t.Fatal(err)
 	}
 
@@ -133,13 +147,13 @@ func TestBytes(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	input, expected, err := testdata()
+	input, expected, err := testdata(testdata_file)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	actual := Config{}
-	if err := Load(&actual).String(string(input)); err != nil {
+	if err := config.Load(&actual).String(string(input)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -190,13 +204,13 @@ func TestJson(t *testing.T) {
 	   "Default":"default value"
 	}`)
 
-	_, expected, err := testdata()
+	_, expected, err := testdata(testdata_file)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	actual := Config{}
-	if err := Load(&actual).JSON(input); err != nil {
+	if err := config.Load(&actual).JSON(input); err != nil {
 		t.Fatal(err)
 	}
 
@@ -205,108 +219,21 @@ func TestJson(t *testing.T) {
 	}
 }
 
-const parseErrorInput = "STRUCT_KEY=text"
+func TestJsonWithInvalidInput(t *testing.T) {
+	input := json.RawMessage(`invalid json`)
 
-func TestWithIntParseError(t *testing.T) {
-	config := struct {
-		Struct struct {
-			Key int
-		}
-	}{}
-
-	if err := Load(&config).String(parseErrorInput); err == nil {
-		t.Error("expected parse error")
-	}
-}
-
-func TestWithUintParseError(t *testing.T) {
-	config := struct {
-		Struct struct {
-			Key uint
-		}
-	}{}
-
-	if err := Load(&config).String(parseErrorInput); err == nil {
-		t.Error("expected parse error")
-	}
-}
-
-func TestWithFloat32ParseError(t *testing.T) {
-	config := struct {
-		Struct struct {
-			Key float32
-		}
-	}{}
-
-	if err := Load(&config).String(parseErrorInput); err == nil {
-		t.Error("expected parse error")
-	}
-}
-
-func TestWithFloat64ParseError(t *testing.T) {
-	config := struct {
-		Struct struct {
-			Key float64
-		}
-	}{}
-
-	if err := Load(&config).String(parseErrorInput); err == nil {
-		t.Error("expected parse error")
-	}
-}
-
-func TestWithBoolParseError(t *testing.T) {
-	config := struct {
-		Struct struct {
-			Key bool
-		}
-	}{}
-
-	if err := Load(&config).String(parseErrorInput); err == nil {
-		t.Error("expected parse error")
-	}
-}
-
-type errReader struct {
-}
-
-func (e *errReader) Read(p []byte) (n int, err error) {
-	err = errors.New("reader error")
-	return
-}
-
-func TestWithParseReaderError(t *testing.T) {
-	kv := make(map[string]string)
-	err := parseVars(&errReader{}, kv)
-	if len(kv) > 0 {
-		t.Error("expected empty map")
-	}
+	err := config.Load(&Config{}).JSON(input)
 	if err == nil {
-		t.Error("expected reader error")
+		t.Fatal("error expected")
+	}
+
+	if err.Error() != "config: invalid character 'i' looking for beginning of value" {
+		t.Fatal("incorrect error message:", err)
 	}
 }
 
-// Benchmark_parseVars-8            1663723               749 ns/op            4096 B/op          1 allocs/op
-func Benchmark_parseVars(b *testing.B) {
-	b.ReportAllocs()
-
-	input, _, err := testdata()
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	vars := make(map[string]string)
-	reader := bytes.NewReader(input)
-	for n := 0; n < b.N; n++ {
-		err := parseVars(reader, vars)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-}
-
-func testdata() ([]byte, Config, error) {
-	input, err := ioutil.ReadFile("testdata/.env")
+func testdata(file string) ([]byte, Config, error) {
+	input, err := os.ReadFile(file)
 	if err != nil {
 		return nil, Config{}, err
 	}
@@ -378,84 +305,4 @@ func testdata() ([]byte, Config, error) {
 	}
 
 	return input, expected, nil
-}
-
-func TestWithNilStructPassed(t *testing.T) {
-	tests := []func() error{
-		func() error {
-			return Load(nil).Env()
-		},
-		func() error {
-			return Load(nil).EnvFile()
-		},
-		func() error {
-			return Load(nil).Bytes(nil)
-		},
-		func() error {
-			return Load(nil).String("")
-		},
-		func() error {
-			return Load(nil).JSON(nil)
-		},
-	}
-
-	for _, tt := range tests {
-		if tt() == nil {
-			t.Fatal("expected error")
-		}
-	}
-}
-
-func TestWithStructPassedByValue(t *testing.T) {
-	cfg := Config{}
-	tests := []func() error{
-		func() error {
-			return Load(cfg).Env()
-		},
-		func() error {
-			return Load(cfg).EnvFile()
-		},
-		func() error {
-			return Load(cfg).Bytes(nil)
-		},
-		func() error {
-			return Load(cfg).String("")
-		},
-		func() error {
-			return Load(cfg).JSON(nil)
-		},
-	}
-
-	for _, test := range tests {
-		if test() == nil {
-			t.Fatal("expected error")
-		}
-	}
-}
-
-func TestWithNonStructPassed(t *testing.T) {
-	cfg := 1
-	tests := []func() error{
-		func() error {
-			return Load(&cfg).Env()
-		},
-		func() error {
-			return Load(&cfg).EnvFile()
-		},
-		func() error {
-			return Load(&cfg).Bytes(nil)
-		},
-		func() error {
-			return Load(&cfg).String("")
-		},
-		func() error {
-			return Load(&cfg).JSON(nil)
-		},
-	}
-
-	for _, test := range tests {
-		if test() == nil {
-			t.Fatal("expected error")
-		}
-	}
 }
