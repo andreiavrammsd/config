@@ -17,6 +17,7 @@ import (
 	"os"
 
 	"github.com/andreiavrammsd/config/internal/converter"
+	"github.com/andreiavrammsd/config/internal/interpolater"
 	"github.com/andreiavrammsd/config/internal/parser"
 )
 
@@ -66,7 +67,7 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 		file.Close()
 	}
 
-	(&parser.Interpolater{}).Interpolate(vars)
+	(&interpolater.Interpolater{}).Interpolate(vars)
 
 	if err := l.convert(l.i, func(s string) string { return vars[s] }); err != nil {
 		return fmt.Errorf("config: %w", err)
@@ -102,7 +103,7 @@ func (l *Loader[T]) fromBytes(input []byte) error {
 		return fmt.Errorf("config: %w", err)
 	}
 
-	(&parser.Interpolater{}).Interpolate(vars)
+	(&interpolater.Interpolater{}).Interpolate(vars)
 
 	return l.convert(l.i, func(s string) string { return vars[s] })
 }
