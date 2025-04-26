@@ -66,7 +66,7 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 		file.Close()
 	}
 
-	parser.Interpolate(vars)
+	(&parser.Interpolater{}).Interpolate(vars)
 
 	if err := l.convert(l.i, func(s string) string { return vars[s] }); err != nil {
 		return fmt.Errorf("config: %w", err)
@@ -102,7 +102,7 @@ func (l *Loader[T]) fromBytes(input []byte) error {
 		return fmt.Errorf("config: %w", err)
 	}
 
-	parser.Interpolate(vars)
+	(&parser.Interpolater{}).Interpolate(vars)
 
 	return l.convert(l.i, func(s string) string { return vars[s] })
 }
