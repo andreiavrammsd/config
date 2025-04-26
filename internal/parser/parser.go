@@ -87,7 +87,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 
 		switch {
 		case err == io.EOF:
-			if p.tokens.current == valueToken {
+			if p.at(valueToken) {
 				p.saveVar()
 			}
 			return nil
@@ -96,35 +96,43 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			return err
 
 		case p.stream.isAtCommentBegin():
-			if p.tokens.current == valueToken {
+			if p.at(valueToken) {
 				p.saveVar()
 			}
-			p.tokens.current = commentToken
+			p.set(commentToken)
 
 		case p.stream.isAtLineEnd():
-			if p.tokens.current == valueToken {
+			if p.at(valueToken) {
 				p.saveVar()
 			}
-			p.tokens.current = nameToken
+			p.set(nameToken)
 
-		case p.tokens.current == p.tokens.comment.kind:
+		case p.at(commentToken):
 			continue
 
 		case p.stream.isAtEqualSign():
-			if p.tokens.current == valueToken {
+			if p.at(valueToken) {
 				p.tokens.value.append(p.stream.current)
 			}
-			p.tokens.current = valueToken
+			p.set(valueToken)
 
-		case p.tokens.current == nameToken:
+		case p.at(nameToken):
 			if !p.stream.isAtSpace() {
 				p.tokens.name.append(p.stream.current)
 			}
 
-		case p.tokens.current == valueToken:
+		case p.at(valueToken):
 			p.tokens.value.append(p.stream.current)
 		}
 	}
+}
+
+func (p *Parser) at(kind tokenKind) bool {
+	return p.tokens.current == kind
+}
+
+func (p *Parser) set(kind tokenKind) {
+	p.tokens.current = kind
 }
 
 // saveVar stores the variable name and its value,
@@ -133,7 +141,7 @@ func (p *Parser) saveVar() {
 	p.vars[p.tokens.name.String()] = cleanVarValue(p.tokens.value.buffer)
 	p.tokens.name.buffer = nil
 	p.tokens.value.buffer = nil
-	p.tokens.current = nameToken
+	p.set(nameToken)
 }
 
 func cleanVarValue(v []rune) string {
