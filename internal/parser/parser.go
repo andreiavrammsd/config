@@ -32,31 +32,37 @@ func (s *stream) isAtSpace() bool {
 	return unicode.IsSpace(s.current)
 }
 
+type tokenKind byte
+
+const (
+	// Parser is in the variable name scope: `NAME=value #comment`.
+	nameToken tokenKind = iota
+
+	// Parser is in the variable value scope: `name=VALUE #comment`.
+	valueToken
+
+	// Parser is in the comment scope: `name=value # COMMENT`.
+	commentToken
+)
+
+type token struct {
+	kind   tokenKind
+	buffer []rune
+}
+
+func (t *token) append(r rune) {
+	t.buffer = append(t.buffer, r)
+}
+
+func (t token) String() string {
+	return string(t.buffer)
+}
+
 type tokens struct {
-	// the parser is in the variable name scope: `NAME=value #comment`
-	atName bool
-
-	// the actual variable name: `NAME=value #comment`
-	name []rune
-
-	// the parser is in the variable value scope: `name=VALUE #comment`
-	atValue bool
-
-	// the actual variable value: `name=VALUE #comment`
-	value []rune
-
-	// the parser is in the comment scope: `name=value # COMMENT`
-	atComment bool
-}
-
-// appendToName adds a rune to the name array to form the variable name.
-func (p *tokens) appendToName(r rune) {
-	p.name = append(p.name, r)
-}
-
-// appendToValue adds a rune to the value array to form the variable value.
-func (p *tokens) appendToValue(r rune) {
-	p.value = append(p.value, r)
+	name    token
+	value   token
+	comment token
+	current tokenKind
 }
 
 type Parser struct {
@@ -69,11 +75,10 @@ type Parser struct {
 func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 	p.stream = stream{reader: bufio.NewReader(r)}
 	p.tokens = tokens{
-		atName:    true,
-		name:      nil,
-		atValue:   false,
-		value:     nil,
-		atComment: false,
+		name:    token{nameToken, nil},
+		value:   token{valueToken, nil},
+		comment: token{commentToken, nil},
+		current: nameToken,
 	}
 	p.vars = vars
 
@@ -82,7 +87,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 
 		switch {
 		case err == io.EOF:
-			if p.tokens.atValue {
+			if p.tokens.current == valueToken {
 				p.saveVar()
 			}
 			return nil
@@ -91,36 +96,33 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			return err
 
 		case p.stream.isAtCommentBegin():
-			if p.tokens.atValue {
+			if p.tokens.current == valueToken {
 				p.saveVar()
 			}
-			p.tokens.atName = false
-			p.tokens.atComment = true
+			p.tokens.current = commentToken
 
 		case p.stream.isAtLineEnd():
-			if p.tokens.atValue {
+			if p.tokens.current == valueToken {
 				p.saveVar()
 			}
-			p.tokens.atName = true
-			p.tokens.atComment = false
+			p.tokens.current = nameToken
 
-		case p.tokens.atComment:
+		case p.tokens.current == p.tokens.comment.kind:
 			continue
 
 		case p.stream.isAtEqualSign():
-			if p.tokens.atValue {
-				p.tokens.appendToValue(p.stream.current)
+			if p.tokens.current == valueToken {
+				p.tokens.value.append(p.stream.current)
 			}
-			p.tokens.atName = false
-			p.tokens.atValue = true
+			p.tokens.current = valueToken
 
-		case p.tokens.atName:
+		case p.tokens.current == nameToken:
 			if !p.stream.isAtSpace() {
-				p.tokens.appendToName(p.stream.current)
+				p.tokens.name.append(p.stream.current)
 			}
 
-		case p.tokens.atValue:
-			p.tokens.appendToValue(p.stream.current)
+		case p.tokens.current == valueToken:
+			p.tokens.value.append(p.stream.current)
 		}
 	}
 }
@@ -128,10 +130,10 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 // saveVar stores the variable name and its value,
 // and sets tokens to start scanning for a new variable.
 func (p *Parser) saveVar() {
-	p.vars[string(p.tokens.name)] = cleanVarValue(p.tokens.value)
-	p.tokens.name = nil
-	p.tokens.value = nil
-	p.tokens.atValue = false
+	p.vars[p.tokens.name.String()] = cleanVarValue(p.tokens.value.buffer)
+	p.tokens.name.buffer = nil
+	p.tokens.value.buffer = nil
+	p.tokens.current = nameToken
 }
 
 func cleanVarValue(v []rune) string {
