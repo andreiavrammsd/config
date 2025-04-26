@@ -2,7 +2,6 @@ package parser
 
 import (
 	"bufio"
-	"bytes"
 	"io"
 	"unicode"
 )
@@ -38,13 +37,13 @@ type Tokens struct {
 	atName bool
 
 	// the actual variable name: `NAME=value #comment`
-	name []byte
+	name []rune
 
 	// the parser is in the variable value scope: `name=VALUE #comment`
 	atValue bool
 
 	// the actual variable value: `name=VALUE #comment`
-	value []byte
+	value []rune
 
 	// the parser is in the comment scope: `name=value # COMMENT`
 	atComment bool
@@ -52,12 +51,12 @@ type Tokens struct {
 
 // appendToName adds a rune to the name array to form the variable name.
 func (p *Tokens) appendToName(r rune) {
-	p.name = append(p.name, byte(r))
+	p.name = append(p.name, r)
 }
 
 // appendToValue adds a rune to the value array to form the variable value.
 func (p *Tokens) appendToValue(r rune) {
-	p.value = append(p.value, byte(r))
+	p.value = append(p.value, r)
 }
 
 type Parser struct {
@@ -135,8 +134,8 @@ func (p *Parser) saveVar() {
 	p.tokens.atValue = false
 }
 
-func cleanVarValue(v []byte) string {
-	return string(bytes.Trim(bytes.TrimSpace(v), `"'`))
+func cleanVarValue(v []rune) string {
+	return strings.Trim(strings.TrimSpace(string(v)), `"'`)
 }
 
 func New() *Parser {
