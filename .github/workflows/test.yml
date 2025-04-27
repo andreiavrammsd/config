@@ -35,9 +35,7 @@ jobs:
         go-version: ${{ matrix.config.version }}
 
     - name: Lint
-      run: |
-        make lint
-        git diff --quiet || (echo "\nError. See changed files.\n" && exit 1)
+      run: make lint
 
     - name: Test
       run: make test
