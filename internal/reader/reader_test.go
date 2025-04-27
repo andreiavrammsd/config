@@ -70,7 +70,7 @@ func assertEqual[T comparable](t *testing.T, actual, expected T) {
 	}
 }
 
-func TestConvertIntoStruct(t *testing.T) {
+func TestReadToStruct(t *testing.T) {
 	configStruct := config{}
 
 	err := reader.ReadToStruct(&configStruct, readValue)
@@ -105,7 +105,7 @@ func TestConvertIntoStruct(t *testing.T) {
 	assertEqual(t, configStruct.Struct.Integer, 123)
 }
 
-func TestConvertIntoStructWithValue(t *testing.T) {
+func TestReadToStructWithValue(t *testing.T) {
 	configStruct := struct{}{}
 
 	err := reader.ReadToStruct(configStruct, readValue)
@@ -119,7 +119,7 @@ func TestConvertIntoStructWithValue(t *testing.T) {
 	}
 }
 
-func TestConvertIntoStructWithNonStruct(t *testing.T) {
+func TestReadToStructWithNonStruct(t *testing.T) {
 	var i *int
 
 	err := reader.ReadToStruct(i, readValue)
@@ -133,7 +133,7 @@ func TestConvertIntoStructWithNonStruct(t *testing.T) {
 	}
 }
 
-func TestConvertIntoStructWithNilStruct(t *testing.T) {
+func TestReadToStructWithNilStruct(t *testing.T) {
 	var i *struct{}
 
 	err := reader.ReadToStruct(i, readValue)
@@ -147,7 +147,7 @@ func TestConvertIntoStructWithNilStruct(t *testing.T) {
 	}
 }
 
-func TestConvertIntoStructWithIntParseError(t *testing.T) {
+func TestReadToStructWithIntParseError(t *testing.T) {
 	configStruct := struct{ Value int }{}
 
 	readValue := func(s string) string {
@@ -167,7 +167,7 @@ func TestConvertIntoStructWithIntParseError(t *testing.T) {
 	}
 }
 
-func TestConvertIntoStructWithUintParseError(t *testing.T) {
+func TestReadToStructWithUintParseError(t *testing.T) {
 	configStruct := struct{ Value uint }{}
 
 	readValue := func(s string) string {
@@ -187,7 +187,7 @@ func TestConvertIntoStructWithUintParseError(t *testing.T) {
 	}
 }
 
-func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
+func TestReadToStructWithFloat32ParseError(t *testing.T) {
 	configStruct := struct{ Value float32 }{}
 
 	readValue := func(s string) string {
@@ -207,7 +207,7 @@ func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
 	}
 }
 
-func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
+func TestReadToStructWithFloat64ParseError(t *testing.T) {
 	configStruct := struct{ Value float64 }{}
 
 	readValue := func(s string) string {
@@ -227,7 +227,7 @@ func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
 	}
 }
 
-func TestConvertIntoStructWithBoolParseError(t *testing.T) {
+func TestReadToStructWithBoolParseError(t *testing.T) {
 	configStruct := struct{ Value bool }{}
 
 	readValue := func(s string) string {
@@ -247,7 +247,7 @@ func TestConvertIntoStructWithBoolParseError(t *testing.T) {
 	}
 }
 
-func TestConvertIntoStructWithInnerStructParseError(t *testing.T) {
+func TestReadToStructWithInnerStructParseError(t *testing.T) {
 	configStruct := struct {
 		Struct struct {
 			Integer int

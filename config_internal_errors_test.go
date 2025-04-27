@@ -54,7 +54,7 @@ func TestEnvFileWithParserErrorBytes(t *testing.T) {
 	}
 }
 
-func TestEnvFileWithConverterError(t *testing.T) {
+func TestEnvFileWithReaderError(t *testing.T) {
 	actual := Config{}
 
 	loader := &Loader[Config]{
@@ -62,7 +62,7 @@ func TestEnvFileWithConverterError(t *testing.T) {
 		dotEnvFile:   ".env",
 		parse:        parser.New().Parse,
 		read: func(_ Config, _ func(string) string) error {
-			return errors.New("converter error")
+			return errors.New("reader error")
 		},
 		interpolate: interpolater.New().Interpolate,
 	}
@@ -73,7 +73,7 @@ func TestEnvFileWithConverterError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: converter error" {
+	if err.Error() != "config: reader error" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
