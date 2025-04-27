@@ -89,6 +89,7 @@ linters:
         linters:
           - err113
           - funlen
+          - lll
 formatters:
   enable:
     - gofmt

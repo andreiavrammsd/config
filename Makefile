@@ -1,4 +1,4 @@
-.PHONY: all test bench lint coverage prepushhook
+.PHONY: all test bench lint coverage precommithook
 
 COVER_PROFILE=coverage.txt
 GOLANGCI_LINT_VERSION=2.1.5
@@ -12,8 +12,7 @@ bench:
 	go test -bench=. -benchmem -v -run=Bench ./...
 
 lint: check-lint
-	golangci-lint fmt
-	golangci-lint run
+	@golangci-lint run || (golangci-lint fmt && exit 1)
 
 coverage:
 	go test -v -coverprofile=$(COVER_PROFILE) -covermode=atomic ./...
@@ -22,7 +21,7 @@ coverage-report: coverage
 	go tool cover -html=$(COVER_PROFILE)
 
 precommithook:
-	echo '#!/bin/sh\n\nmake&&git diff --quiet || (echo "\nError. See changed files.\n" && exit 1)' > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+	echo '#!/bin/sh\n\nmake || (echo "\nError. See changed files.\n" && exit 1)' > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 check-lint:
 	@if ! golangci-lint version 2>/dev/null | grep -q "$(GOLANGCI_LINT_VERSION)"; then \
