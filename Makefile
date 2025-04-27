@@ -14,6 +14,7 @@ bench:
 lint: check-lint
 	golangci-lint fmt
 	golangci-lint run
+	@git diff --quiet || (echo "\nError. See changed files.\n" && exit 1)
 
 coverage:
 	go test -v -coverprofile=$(COVER_PROFILE) -covermode=atomic ./...
