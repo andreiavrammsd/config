@@ -16,31 +16,34 @@ import (
 	"io"
 	"os"
 
-	"github.com/andreiavrammsd/config/internal/converter"
+	"github.com/andreiavrammsd/config/internal/interpolater"
 	"github.com/andreiavrammsd/config/internal/parser"
+	"github.com/andreiavrammsd/config/internal/reader"
 )
 
 // Loader provides methods to load configuration values into a struct.
 type Loader[T any] struct {
-	i          T
-	dotEnvFile string
-	parse      func(r io.Reader, vars map[string]string) error
-	convert    func(i T, data func(string) string) error
+	configStruct T
+	dotEnvFile   string
+	parse        func(r io.Reader, vars map[string]string) error
+	read         func(configStruct T, data func(string) string) error
+	interpolate  func(map[string]string)
 }
 
 // Load creates a Loader with given struct.
 func Load[T any](config T) *Loader[T] {
 	return &Loader[T]{
-		i:          config,
-		dotEnvFile: ".env",
-		parse:      parser.New().Parse,
-		convert:    converter.ConvertIntoStruct[T],
+		configStruct: config,
+		dotEnvFile:   ".env",
+		parse:        parser.New().Parse,
+		read:         reader.ReadToStruct[T],
+		interpolate:  interpolater.New().Interpolate,
 	}
 }
 
 // Env loads config into struct from environment variables.
 func (l *Loader[T]) Env() error {
-	return l.convert(l.i, os.Getenv)
+	return l.read(l.configStruct, os.Getenv)
 }
 
 // EnvFile loads config into struct from environment variables in one or multiple files (dotenv).
@@ -66,9 +69,9 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 		file.Close()
 	}
 
-	parser.Interpolate(vars)
+	l.interpolate(vars)
 
-	if err := l.convert(l.i, func(s string) string { return vars[s] }); err != nil {
+	if err := l.read(l.configStruct, func(s string) string { return vars[s] }); err != nil {
 		return fmt.Errorf("config: %w", err)
 	}
 
@@ -88,7 +91,7 @@ func (l *Loader[T]) String(input string) error {
 
 // JSON loads config into struct from json.
 func (l *Loader[T]) JSON(input json.RawMessage) error {
-	if err := json.Unmarshal(input, l.i); err != nil {
+	if err := json.Unmarshal(input, l.configStruct); err != nil {
 		return fmt.Errorf("config: %w", err)
 	}
 
@@ -102,7 +105,7 @@ func (l *Loader[T]) fromBytes(input []byte) error {
 		return fmt.Errorf("config: %w", err)
 	}
 
-	parser.Interpolate(vars)
+	l.interpolate(vars)
 
-	return l.convert(l.i, func(s string) string { return vars[s] })
+	return l.read(l.configStruct, func(s string) string { return vars[s] })
 }
