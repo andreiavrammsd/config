@@ -23,15 +23,15 @@ import (
 
 // Loader provides methods to load configuration values into a struct.
 type Loader[T any] struct {
-	configStruct T
+	configStruct *T
 	dotEnvFile   string
 	parse        func(r io.Reader, vars map[string]string) error
-	read         func(configStruct T, data func(string) string) error
+	read         func(configStruct *T, data func(string) string) error
 	interpolate  func(map[string]string)
 }
 
 // Load creates a Loader with given struct.
-func Load[T any](config T) *Loader[T] {
+func Load[T any](config *T) *Loader[T] {
 	return &Loader[T]{
 		configStruct: config,
 		dotEnvFile:   ".env",

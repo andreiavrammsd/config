@@ -16,7 +16,7 @@ func TestEnvFileWithParserErrorAtEnvFile(t *testing.T) {
 	actual := Config{}
 
 	loader := &Loader[Config]{
-		configStruct: actual,
+		configStruct: &actual,
 		dotEnvFile:   ".env",
 		parse:        func(_ io.Reader, _ map[string]string) error { return errors.New("parser error with env file") },
 		read:         reader.ReadToStruct[Config],
@@ -37,7 +37,7 @@ func TestEnvFileWithParserErrorBytes(t *testing.T) {
 	actual := Config{}
 
 	loader := &Loader[Config]{
-		configStruct: actual,
+		configStruct: &actual,
 		dotEnvFile:   ".env",
 		parse:        func(_ io.Reader, _ map[string]string) error { return errors.New("parser error with bytes") },
 		read:         reader.ReadToStruct[Config],
@@ -58,10 +58,10 @@ func TestEnvFileWithReaderError(t *testing.T) {
 	actual := Config{}
 
 	loader := &Loader[Config]{
-		configStruct: actual,
+		configStruct: &actual,
 		dotEnvFile:   ".env",
 		parse:        parser.New().Parse,
-		read: func(_ Config, _ func(string) string) error {
+		read: func(_ *Config, _ func(string) string) error {
 			return errors.New("reader error")
 		},
 		interpolate: interpolater.New().Interpolate,

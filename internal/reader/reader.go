@@ -16,19 +16,15 @@ type ReadValue = func(string) string
 
 // ReadToStruct take a pointer to a struct and, for each property in the struct (recursively),
 // generates a key that it passes to the given readValue function which must return the value for the property.
-func ReadToStruct[T any](configStruct T, readValue ReadValue) error {
-	typ := reflect.TypeOf(configStruct)
-
-	if typ.Kind() != reflect.Ptr {
-		return errors.New("value passed instead of reference")
+func ReadToStruct[T any](configStruct *T, readValue ReadValue) error {
+	if configStruct == nil {
+		return errors.New("nil pointer passed")
 	}
+
+	typ := reflect.TypeOf(configStruct)
 
 	if typ.Elem().Kind() != reflect.Struct {
 		return errors.New("non struct passed")
-	}
-
-	if reflect.ValueOf(configStruct).IsNil() {
-		return errors.New("nil struct passed")
 	}
 
 	return parse(typ, reflect.ValueOf(configStruct), readValue, "")

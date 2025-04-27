@@ -105,24 +105,10 @@ func TestReadToStruct(t *testing.T) {
 	assertEqual(t, configStruct.Struct.Integer, 123)
 }
 
-func TestReadToStructWithValue(t *testing.T) {
-	configStruct := struct{}{}
-
-	err := reader.ReadToStruct(configStruct, readValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "value passed instead of reference" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
 func TestReadToStructWithNonStruct(t *testing.T) {
-	var i *int
+	var i int
 
-	err := reader.ReadToStruct(i, readValue)
+	err := reader.ReadToStruct(&i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -133,16 +119,16 @@ func TestReadToStructWithNonStruct(t *testing.T) {
 	}
 }
 
-func TestReadToStructWithNilStruct(t *testing.T) {
-	var i *struct{}
+func TestReadToStructWithNilPointer(t *testing.T) {
+	var configStruct *struct{}
 
-	err := reader.ReadToStruct(i, readValue)
+	err := reader.ReadToStruct(configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "nil struct passed" {
+	if err.Error() != "nil pointer passed" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
