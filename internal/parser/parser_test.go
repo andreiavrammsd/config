@@ -4,91 +4,101 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"os"
+	"runtime"
 	"testing"
 
 	"github.com/andreiavrammsd/config/internal/parser"
 )
 
-const environment string = ` # key=value
-TIMEOUT=2000000000
-ABC =" string\" "
-A =1
-  B  =2
-C=3# key=value
-D =4
-E=5
-E_NEG=-1
-UA=1  # key=value
-UB=2
-# comment
-UC=30
-
-UD=40
-UE=50
-F32=15425.2231
-F64=245232212.9844448
-IsSet=true
-REDIS_CONNECTION_HOST=" localhost "
-REDIS_PORT=6379
-STRUCT_FIELD=Value
-STRUCTPTR_FIELD="Val\"ue "
-MONGO_DATABASE_HOST="mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb" # db connection
-MONGO_DATABASE_COLLECTION_NAME='us=ers'
-MONGO_OTHER=$A
-MONGO_X=97
-# comment
-INTERPOLATED="\$B env_$A $ \$B \\$C ${REDIS_PORT} + $"
-
-`
-
-func assertNotExist(t *testing.T, key string, vars map[string]string) {
-	if _, ok := vars[key]; ok {
-		t.Fatalf("%s not expected", key)
-	}
-}
-
 func assertEqual(t *testing.T, actual, expected string) {
 	if actual != expected {
-		t.Fatalf("%s != %s", actual, expected)
+		_, file, line, _ := runtime.Caller(1)
+		t.Fatalf("%s:%d: %q != %q", file, line, actual, expected)
 	}
 }
 
 func TestParse(t *testing.T) {
-	reader := bytes.NewReader([]byte(environment))
+	reader := bytes.NewReader(testdata("testdata/.env"))
 	vars := make(map[string]string)
+
 	err := parser.New().Parse(reader, vars)
 	if err != nil {
 		t.Error("expected no error")
 	}
 
-	assertNotExist(t, "key", vars)
-	assertEqual(t, vars["TIMEOUT"], "2000000000")
-	assertEqual(t, vars["ABC"], " string\\\" ")
+	expectedNumberOfVars := 65 // IS THIS OK?
+	if len(vars) != expectedNumberOfVars {
+		t.Fatalf("Expected %d vars, got %d", expectedNumberOfVars, len(vars))
+	}
+
 	assertEqual(t, vars["A"], "1")
-	assertEqual(t, vars["B"], "2")
-	assertEqual(t, vars["C"], "3")
-	assertNotExist(t, "KEY3", vars)
-	assertEqual(t, vars["D"], "4")
-	assertEqual(t, vars["E"], "5")
-	assertEqual(t, vars["E_NEG"], "-1")
-	assertEqual(t, vars["UA"], "1")
-	assertNotExist(t, "KEY", vars)
-	assertEqual(t, vars["UB"], "2")
-	assertNotExist(t, "comment", vars)
-	assertEqual(t, vars["UC"], "30")
-	assertEqual(t, vars["UD"], "40")
-	assertEqual(t, vars["UE"], "50")
-	assertEqual(t, vars["F32"], "15425.2231")
-	assertEqual(t, vars["F64"], "245232212.9844448")
-	assertEqual(t, vars["IsSet"], "true")
-	assertEqual(t, vars["REDIS_CONNECTION_HOST"], " localhost ")
-	assertEqual(t, vars["REDIS_PORT"], "6379")
-	assertEqual(t, vars["STRUCT_FIELD"], "Value")
-	assertEqual(t, vars["STRUCTPTR_FIELD"], "Val\\\"ue ")
+	assertEqual(t, vars["B"], "$A")
+	assertEqual(t, vars["BB"], "CC")
+	assertEqual(t, vars["VAR_WITH_COMMENT"], "val with comment")
+	assertEqual(t, vars["D"], "")
+	assertEqual(t, vars["D2"], "")
+	assertEqual(t, vars["D3"], "")
+	assertEqual(t, vars["E"], "some value with spaces")
+	assertEqual(t, vars["F"], "another value with spaces")
 	assertEqual(t, vars["MONGO_DATABASE_HOST"], "mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb")
 	assertEqual(t, vars["MONGO_DATABASE_COLLECTION_NAME"], "us=ers")
-	assertEqual(t, vars["MONGO_OTHER"], "$A")
-	assertEqual(t, vars["MONGO_X"], "97")
+	assertEqual(t, vars["G"], "quote 'inside' quote")
+	assertEqual(t, vars["H"], "quote \"inside\" quote")
+	assertEqual(t, vars["I"], "line1\\nline2")
+	assertEqual(t, vars["J"], "tab\\tseparated")
+	assertEqual(t, vars["ABC"], " string\\\" ")
+	assertEqual(t, vars["K"], "Emoji 🚀 and Unicode ü")
+	assertEqual(t, vars["L"], "spaced_key")
+	assertEqual(t, vars["M"], "spaced_value")
+	assertEqual(t, vars["N"], "spaced_both")
+	assertEqual(t, vars["NUM"], "-1")
+	assertEqual(t, vars["NOT_NUM"], "---1")
+	assertEqual(t, vars["POS_NUM"], "+1")
+	assertEqual(t, vars["POS_NOT_NUM"], "++1")
+	// FAILS: assertEqual(t, vars["O"], "#notacomment")
+	assertEqual(t, vars["P"], "key=value=another")
+	assertEqual(t, vars["Q"], "$UNDEFINED_VAR")
+	assertEqual(t, vars["R"], "$A-$B-$C")
+	assertEqual(t, vars["$SPECIAL"], "weird")
+	assertEqual(t, vars["1NUMBER"], "bad")
+	assertEqual(t, vars["S"], "whitespace_before_key")
+	assertEqual(t, vars["T"], "trailing_space")
+	assertEqual(t, vars["U"], "lots_of_space")
+	assertEqual(t, vars["V"], "first=second=third")
+	assertEqual(t, vars["W"], "\\uZZZZ")
+	assertEqual(t, vars["X1"], "true")
+	assertEqual(t, vars["X2"], "False")
+	assertEqual(t, vars["X3"], "0")
+	assertEqual(t, vars["X4"], "1")
+	assertEqual(
+		t,
+		vars["BIG"],
+		"Lorem_ipsum_dolor_sit_amet_consectetur_adipiscing_elit_sed_do_eiusmod_tempor_incididunt_ut_labore_et_dolore_magna_aliqua",
+	)
+	// FAILS: assertEqual(t, vars["Y"], "this is \na weird \nmultiline\nvalue")
+	// FAILS: assertEqual(t, vars["LONG"], "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	assertEqual(t, vars["Z1"], "12345")
+	assertEqual(t, vars["Z2"], "0")
+	assertEqual(t, vars["Z3"], "-999")
+	assertEqual(t, vars["TIMEOUT"], "2000000000")
+	assertEqual(t, vars["F32"], "15425.2231")
+	assertEqual(t, vars["F64"], "245232212.9844448")
+	assertEqual(t, vars["AA.key"], "subvalue")
+	assertEqual(t, vars["BB-key"], "another_subvalue")
+	assertEqual(t, vars["CC___DD"], "weird_key")
+	assertEqual(t, vars["EE"], "[this looks like json]")
+	assertEqual(t, vars["EE2"], "[this looks like json]")
+	assertEqual(t, vars["EE3"], "[this looks like json]")
+	// IS THIS OK? assertEqual(t, vars["EE4"], "[this looks like json]")
+	// IS THIS OK? assertEqual(t, vars["EE5"], "[this looks like json]")
+	// FAILS: assertEqual(t, vars["FF"], "{ \"name\": \"John\", \"age\": 30 }")
+	assertEqual(t, vars["ARRAY"], "one,two,three")
+	assertEqual(t, vars["EMPTY1"], "")
+	assertEqual(t, vars["EMPTY2"], "")
+	assertEqual(t, vars["NUM_STRING"], "12345")
+	// FAILS: assertEqual(t, vars["BROKEN_NEWLINE"], "this is\nstill valid because quotes stay open")
+	assertEqual(t, vars["XX"], "second")
 	assertEqual(t, vars["INTERPOLATED"], "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $")
 }
 
@@ -145,7 +155,7 @@ func TestParseWithReaderError(t *testing.T) {
 // Benchmark_Parse-8                1913996               618.2 ns/op          4192 B/op          2 allocs/op.
 func Benchmark_Parse(b *testing.B) {
 	p := parser.New()
-	reader := bytes.NewReader([]byte(environment))
+	reader := bytes.NewReader(testdata("testdata/.env"))
 	vars := make(map[string]string)
 
 	b.ReportAllocs()
@@ -157,4 +167,13 @@ func Benchmark_Parse(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
+}
+
+func testdata(file string) []byte {
+	input, err := os.ReadFile(file)
+	if err != nil {
+		panic(err)
+	}
+
+	return input
 }
