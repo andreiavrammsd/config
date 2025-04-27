@@ -12,6 +12,7 @@ bench:
 	go test -bench=. -benchmem -v -run=Bench ./...
 
 lint: check-lint
+	golangci-lint fmt
 	golangci-lint run
 
 coverage:
@@ -20,8 +21,8 @@ coverage:
 coverage-report: coverage
 	go tool cover -html=$(COVER_PROFILE)
 
-prepushhook:
-	echo '#!/bin/sh\n\nmake' > .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+precommithook:
+	echo '#!/bin/sh\n\nmake' > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 check-lint:
 	@if ! golangci-lint version 2>/dev/null | grep -q "$(GOLANGCI_LINT_VERSION)"; then \

@@ -74,7 +74,6 @@ func TestReadToStruct(t *testing.T) {
 	configStruct := config{}
 
 	err := reader.ReadToStruct(&configStruct, readValue)
-
 	if err != nil {
 		t.Fatal("error not expected")
 	}

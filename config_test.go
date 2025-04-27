@@ -31,7 +31,7 @@ type Config struct {
 			Port int `env:"REDIS_PORT"`
 		}
 	}
-	String       string `env:"ABC" default:"ignored"`
+	String       string `env:"ABC"   default:"ignored"`
 	Struct       Struct
 	StructPtr    *Struct
 	D            int64
@@ -50,7 +50,7 @@ type Config struct {
 	UA           uint8
 	IsSet        bool
 	Interpolated string
-	Default      string `default:"default value"`
+	Default      string `            default:"default value"`
 }
 
 type envFile struct {

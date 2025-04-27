@@ -74,7 +74,6 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 	}
 
 	return nil
-
 }
 
 // Bytes loads config into struct from byte array.
