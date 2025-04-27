@@ -25,6 +25,27 @@ linters:
     - errcheck
     - godot
     - revive
+    - unconvert
+    - usestdlibvars
+    - testableexamples
+    - reassign
+    - prealloc
+    - nilnil
+    - nilnesserr
+    - nestif
+    - makezero
+    - lll
+    - ireturn
+    - importas
+    - godox
+    - gocyclo
+    - gocritic
+    - gochecknoglobals
+    - funcorder
+    - forcetypeassert
+    - decorder
+    - bidichk
+    - asasalint
   settings:
     dupl:
       threshold: 100

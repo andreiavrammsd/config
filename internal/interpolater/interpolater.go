@@ -160,7 +160,7 @@ func (ip *Interpolater) varStarts() bool {
 	}
 
 	next := ip.rawValue.peek(1)
-	if unicode.IsSpace(next) || next == '"' || next == '\'' { // TODO: Document scenario.
+	if unicode.IsSpace(next) || next == '"' || next == '\'' {
 		return false
 	}
 
