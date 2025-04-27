@@ -46,6 +46,9 @@ linters:
     - decorder
     - bidichk
     - asasalint
+    - wrapcheck
+    - err113
+    - funlen
   settings:
     dupl:
       threshold: 100
@@ -81,10 +84,21 @@ linters:
       - third_party$
       - builtin$
       - examples$
+    rules:
+      - path: _test\.go
+        linters:
+          - err113
+          - funlen
 formatters:
   enable:
     - gofmt
     - goimports
+    - gci
+    - gofumpt
+    - golines
+  settings:
+    golines:
+      max-len: 120
   exclusions:
     generated: lax
     paths:

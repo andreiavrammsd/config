@@ -10,7 +10,7 @@ import (
 
 type Configuration struct {
 	Username string `env:"USERNAME"`
-	Tag      string `env:"TAG" default:"none"`
+	Tag      string `env:"TAG"      default:"none"`
 }
 
 func ExampleLoader_Env() {

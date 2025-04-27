@@ -2,6 +2,7 @@ package reader
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -14,21 +15,22 @@ const (
 
 type ReadValue = func(string) string
 
+var (
+	errNilPointer = errors.New("nil pointer passed")
+	errNonStruct  = errors.New("non struct passed")
+)
+
 // ReadToStruct take a pointer to a struct and, for each property in the struct (recursively),
 // generates a key that it passes to the given readValue function which must return the value for the property.
-func ReadToStruct[T any](configStruct T, readValue ReadValue) error {
+func ReadToStruct[T any](configStruct *T, readValue ReadValue) error {
+	if configStruct == nil {
+		return errNilPointer
+	}
+
 	typ := reflect.TypeOf(configStruct)
 
-	if typ.Kind() != reflect.Ptr {
-		return errors.New("value passed instead of reference")
-	}
-
 	if typ.Elem().Kind() != reflect.Struct {
-		return errors.New("non struct passed")
-	}
-
-	if reflect.ValueOf(configStruct).IsNil() {
-		return errors.New("nil struct passed")
+		return errNonStruct
 	}
 
 	return parse(typ, reflect.ValueOf(configStruct), readValue, "")
@@ -115,31 +117,31 @@ func setFieldValue(field *reflect.StructField, fieldValue reflect.Value, value s
 	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
 		v, err := strconv.ParseInt(value, 10, 0)
 		if err != nil {
-			return err
+			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 		fieldValue.SetInt(v)
 	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
 		v, err := strconv.ParseUint(value, 10, 0)
 		if err != nil {
-			return err
+			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 		fieldValue.SetUint(v)
 	case reflect.Float32:
 		v, err := strconv.ParseFloat(value, 32)
 		if err != nil {
-			return err
+			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 		fieldValue.SetFloat(v)
 	case reflect.Float64:
 		v, err := strconv.ParseFloat(value, 64)
 		if err != nil {
-			return err
+			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 		fieldValue.SetFloat(v)
 	case reflect.Bool:
 		v, err := strconv.ParseBool(value)
 		if err != nil {
-			return err
+			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 		fieldValue.SetBool(v)
 	case reflect.Slice:

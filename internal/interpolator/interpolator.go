@@ -1,4 +1,4 @@
-package interpolater
+package interpolator
 
 import (
 	"strings"
@@ -10,13 +10,8 @@ type value struct {
 	i       int
 }
 
-// endsWithDollarSign tests for: `NAME=text + $`.
-func (ip *value) endsWithDollarSign() bool {
-	return ip.atEnd() && !isEscape(ip.peek(-1))
-}
-
 func (ip *value) atEnd() bool {
-	return ip.i == len(ip.content)-1
+	return ip.peek(1) == 0
 }
 
 // nextVarIsDoubleEscaped detects: `\\$“.
@@ -58,7 +53,7 @@ type variable struct {
 	value []rune
 }
 
-type Interpolater struct {
+type Interpolator struct {
 	// All variables to be interpolated.
 	vars map[string]string
 
@@ -69,80 +64,93 @@ type Interpolater struct {
 	interpolatedVar variable
 }
 
-func (ip *Interpolater) Interpolate(vars map[string]string) {
+// Interpolate converts each variable usage ($VAR, ${VAR}) inside a variable (value of map)
+// to the actual value of the variable.
+// It considers scenarios such as escaped variables and literal dollar signs.
+//
+// From:
+//
+//	A=1
+//	B=text $A
+//	C=\$B
+//
+// To:
+//
+//	A=1
+//	B=text 1
+//	C=$B
+func (ip *Interpolator) Interpolate(vars map[string]string) {
 	ip.vars = vars
 
 	for key, value := range ip.vars {
 		ip.rawValue.content = value
 
-		if !ip.containsVar() {
-			continue
+		if ip.rawValueContainsVars() {
+			ip.parseVars()
+			vars[key] = string(ip.interpolatedVar.value)
 		}
-
-		atVar := false // Notifies we're in the context of a variable: `text $IT_IS_HERE text`.
-		ip.interpolatedVar.name = nil
-		ip.interpolatedVar.value = nil
-
-		for ip.rawValue.i = 0; ip.rawValue.i < len(ip.rawValue.content); ip.rawValue.i++ {
-			if ip.varStarts() {
-				atVar = true
-
-				// If value ends in $, literally append $. Do not interpret as variable.
-				if ip.rawValue.endsWithDollarSign() {
-					ip.appendCurrentCharacterToNewValue()
-				}
-
-				continue
-			}
-
-			// ${VARIABLE}
-			if atVar && (ip.rawValue.isOpenBrace() || ip.rawValue.isCloseBrace()) {
-				continue
-			}
-
-			if !atVar {
-				if ip.rawValue.nextVarIsDoubleEscaped() {
-					ip.appendCurrentCharacterToNewValue()
-
-					continue
-				}
-
-				if ip.rawValue.nextVarIsEscaped() {
-					continue
-				}
-
-				// Append literal.
-				ip.appendCurrentCharacterToNewValue()
-
-				continue
-			}
-
-			// Variable ends when a space is found. Append literal.
-			if ip.rawValue.isAtSpace() {
-				ip.appendAllToNewValue()
-				ip.appendCurrentCharacterToNewValue()
-				ip.interpolatedVar.name = nil
-				atVar = false
-
-				continue
-			}
-
-			ip.appendToName()
-		}
-
-		if atVar {
-			ip.appendAllToNewValue()
-		}
-
-		vars[key] = string(ip.interpolatedVar.value)
 	}
 }
 
-func (ip *Interpolater) containsVar() bool {
+func (ip *Interpolator) rawValueContainsVars() bool {
 	return strings.IndexByte(ip.rawValue.content, '$') != -1
 }
 
-func (ip *Interpolater) varStarts() bool {
+func (ip *Interpolator) parseVars() {
+	atVar := false // Notifies we're in the context of a variable: `text $IT_IS_HERE more text`.
+	ip.interpolatedVar.name = nil
+	ip.interpolatedVar.value = nil
+
+	for ip.rawValue.i = 0; ip.rawValue.i < len(ip.rawValue.content); ip.rawValue.i++ {
+		// Variable starts now. Continue to get its name and value.
+		if ip.varStarts() {
+			atVar = true
+			continue
+		}
+
+		// Variable is between braces: ${VARIABLE}. Continue ignoring braces.
+		if atVar && (ip.rawValue.isOpenBrace() || ip.rawValue.isCloseBrace()) {
+			continue
+		}
+
+		if !atVar {
+			if ip.rawValue.nextVarIsDoubleEscaped() {
+				ip.appendCurrentCharacterToNewValue()
+				continue
+			}
+
+			if ip.rawValue.nextVarIsEscaped() {
+				continue
+			}
+
+			// Append literal.
+			ip.appendCurrentCharacterToNewValue()
+			continue
+		}
+
+		// Variable ends when a space is found. Append literal.
+		if ip.rawValue.isAtSpace() {
+			ip.appendAllToNewValue()
+			ip.appendCurrentCharacterToNewValue()
+			ip.interpolatedVar.name = nil
+			atVar = false
+			continue
+		}
+
+		ip.appendToName()
+	}
+
+	if atVar {
+		ip.appendAllToNewValue()
+	}
+}
+
+func (ip *Interpolator) varStarts() bool {
+	// Litteral dollar sign at the end: `text $`.
+	if isDolar(ip.rawValue.current()) && ip.rawValue.atEnd() {
+		return false
+	}
+
 	// Normal variable: `text $VAR text`. Will use its value.
 	if !isDolar(ip.rawValue.current()) {
 		return false
@@ -167,15 +175,15 @@ func (ip *Interpolater) varStarts() bool {
 	return true
 }
 
-func (ip *Interpolater) appendToName() {
+func (ip *Interpolator) appendToName() {
 	ip.interpolatedVar.name = append(ip.interpolatedVar.name, ip.rawValue.current())
 }
 
-func (ip *Interpolater) appendCurrentCharacterToNewValue() {
+func (ip *Interpolator) appendCurrentCharacterToNewValue() {
 	ip.interpolatedVar.value = append(ip.interpolatedVar.value, ip.rawValue.current())
 }
 
-func (ip *Interpolater) appendAllToNewValue() {
+func (ip *Interpolator) appendAllToNewValue() {
 	ip.interpolatedVar.value = append(ip.interpolatedVar.value, []rune(ip.vars[string(ip.interpolatedVar.name)])...)
 }
 
@@ -187,6 +195,6 @@ func isDolar(r rune) bool {
 	return r == '$'
 }
 
-func New() *Interpolater {
-	return &Interpolater{}
+func New() *Interpolator {
+	return &Interpolator{}
 }

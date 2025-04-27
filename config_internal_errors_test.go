@@ -5,7 +5,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/andreiavrammsd/config/internal/interpolater"
+	"github.com/andreiavrammsd/config/internal/interpolator"
 	"github.com/andreiavrammsd/config/internal/parser"
 	"github.com/andreiavrammsd/config/internal/reader"
 )
@@ -16,7 +16,7 @@ func TestEnvFileWithParserErrorAtEnvFile(t *testing.T) {
 	actual := Config{}
 
 	loader := &Loader[Config]{
-		configStruct: actual,
+		configStruct: &actual,
 		dotEnvFile:   ".env",
 		parse:        func(_ io.Reader, _ map[string]string) error { return errors.New("parser error with env file") },
 		read:         reader.ReadToStruct[Config],
@@ -37,7 +37,7 @@ func TestEnvFileWithParserErrorBytes(t *testing.T) {
 	actual := Config{}
 
 	loader := &Loader[Config]{
-		configStruct: actual,
+		configStruct: &actual,
 		dotEnvFile:   ".env",
 		parse:        func(_ io.Reader, _ map[string]string) error { return errors.New("parser error with bytes") },
 		read:         reader.ReadToStruct[Config],
@@ -54,17 +54,17 @@ func TestEnvFileWithParserErrorBytes(t *testing.T) {
 	}
 }
 
-func TestEnvFileWithConverterError(t *testing.T) {
+func TestEnvFileWithReaderError(t *testing.T) {
 	actual := Config{}
 
 	loader := &Loader[Config]{
-		configStruct: actual,
+		configStruct: &actual,
 		dotEnvFile:   ".env",
 		parse:        parser.New().Parse,
-		read: func(_ Config, _ func(string) string) error {
-			return errors.New("converter error")
+		read: func(_ *Config, _ func(string) string) error {
+			return errors.New("reader error")
 		},
-		interpolate: interpolater.New().Interpolate,
+		interpolate: interpolator.New().Interpolate,
 	}
 
 	err := loader.EnvFile("testdata/.env")
@@ -73,7 +73,7 @@ func TestEnvFileWithConverterError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: converter error" {
+	if err.Error() != "config: reader error" {
 		t.Fatal("incorrect error message:", err)
 	}
 }

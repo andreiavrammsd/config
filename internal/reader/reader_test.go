@@ -70,11 +70,10 @@ func assertEqual[T comparable](t *testing.T, actual, expected T) {
 	}
 }
 
-func TestConvertIntoStruct(t *testing.T) {
+func TestReadToStruct(t *testing.T) {
 	configStruct := config{}
 
 	err := reader.ReadToStruct(&configStruct, readValue)
-
 	if err != nil {
 		t.Fatal("error not expected")
 	}
@@ -105,24 +104,10 @@ func TestConvertIntoStruct(t *testing.T) {
 	assertEqual(t, configStruct.Struct.Integer, 123)
 }
 
-func TestConvertIntoStructWithValue(t *testing.T) {
-	configStruct := struct{}{}
+func TestReadToStructWithNonStruct(t *testing.T) {
+	var i int
 
-	err := reader.ReadToStruct(configStruct, readValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "value passed instead of reference" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func TestConvertIntoStructWithNonStruct(t *testing.T) {
-	var i *int
-
-	err := reader.ReadToStruct(i, readValue)
+	err := reader.ReadToStruct(&i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -133,21 +118,21 @@ func TestConvertIntoStructWithNonStruct(t *testing.T) {
 	}
 }
 
-func TestConvertIntoStructWithNilStruct(t *testing.T) {
-	var i *struct{}
+func TestReadToStructWithNilPointer(t *testing.T) {
+	var configStruct *struct{}
 
-	err := reader.ReadToStruct(i, readValue)
+	err := reader.ReadToStruct(configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "nil struct passed" {
+	if err.Error() != "nil pointer passed" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
 
-func TestConvertIntoStructWithIntParseError(t *testing.T) {
+func TestReadToStructWithIntParseError(t *testing.T) {
 	configStruct := struct{ Value int }{}
 
 	readValue := func(s string) string {
@@ -162,12 +147,12 @@ func TestConvertIntoStructWithIntParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseInt: parsing \"invalid int value\": invalid syntax" {
+	if err.Error() != "field Value (strconv.ParseInt: parsing \"invalid int value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
 
-func TestConvertIntoStructWithUintParseError(t *testing.T) {
+func TestReadToStructWithUintParseError(t *testing.T) {
 	configStruct := struct{ Value uint }{}
 
 	readValue := func(s string) string {
@@ -182,12 +167,12 @@ func TestConvertIntoStructWithUintParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseUint: parsing \"invalid uint value\": invalid syntax" {
+	if err.Error() != "field Value (strconv.ParseUint: parsing \"invalid uint value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
 
-func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
+func TestReadToStructWithFloat32ParseError(t *testing.T) {
 	configStruct := struct{ Value float32 }{}
 
 	readValue := func(s string) string {
@@ -202,12 +187,12 @@ func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseFloat: parsing \"invalid float32 value\": invalid syntax" {
+	if err.Error() != "field Value (strconv.ParseFloat: parsing \"invalid float32 value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
 
-func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
+func TestReadToStructWithFloat64ParseError(t *testing.T) {
 	configStruct := struct{ Value float64 }{}
 
 	readValue := func(s string) string {
@@ -222,12 +207,12 @@ func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseFloat: parsing \"invalid float64 value\": invalid syntax" {
+	if err.Error() != "field Value (strconv.ParseFloat: parsing \"invalid float64 value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
 
-func TestConvertIntoStructWithBoolParseError(t *testing.T) {
+func TestReadToStructWithBoolParseError(t *testing.T) {
 	configStruct := struct{ Value bool }{}
 
 	readValue := func(s string) string {
@@ -242,12 +227,12 @@ func TestConvertIntoStructWithBoolParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseBool: parsing \"invalid bool value\": invalid syntax" {
+	if err.Error() != "field Value (strconv.ParseBool: parsing \"invalid bool value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
 
-func TestConvertIntoStructWithInnerStructParseError(t *testing.T) {
+func TestReadToStructWithInnerStructParseError(t *testing.T) {
 	configStruct := struct {
 		Struct struct {
 			Integer int
@@ -266,7 +251,7 @@ func TestConvertIntoStructWithInnerStructParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseInt: parsing \"invalid struct integer value\": invalid syntax" {
+	if err.Error() != "field Integer (strconv.ParseInt: parsing \"invalid struct integer value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }

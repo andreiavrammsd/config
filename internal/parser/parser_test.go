@@ -57,7 +57,6 @@ func TestParse(t *testing.T) {
 	reader := bytes.NewReader([]byte(environment))
 	vars := make(map[string]string)
 	err := parser.New().Parse(reader, vars)
-
 	if err != nil {
 		t.Error("expected no error")
 	}
@@ -112,7 +111,6 @@ func (e *eofReader) Read(p []byte) (n int, err error) {
 func TestParseWithEOF(t *testing.T) {
 	vars := make(map[string]string)
 	err := parser.New().Parse(&eofReader{"a=b", 0}, vars)
-
 	if err != nil {
 		t.Error("expected no error")
 	}
@@ -120,8 +118,7 @@ func TestParseWithEOF(t *testing.T) {
 	assertEqual(t, vars["a"], "b")
 }
 
-type errReader struct {
-}
+type errReader struct{}
 
 func (e *errReader) Read(_ []byte) (n int, err error) {
 	err = errors.New("reader error")
