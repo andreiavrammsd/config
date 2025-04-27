@@ -14,7 +14,6 @@ bench:
 lint: check-lint
 	golangci-lint fmt
 	golangci-lint run
-	@git diff --quiet || (echo "\nError. See changed files.\n" && exit 1)
 
 coverage:
 	go test -v -coverprofile=$(COVER_PROFILE) -covermode=atomic ./...
@@ -23,7 +22,7 @@ coverage-report: coverage
 	go tool cover -html=$(COVER_PROFILE)
 
 precommithook:
-	echo '#!/bin/sh\n\nmake' > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+	echo '#!/bin/sh\n\nmake&&git diff --quiet || (echo "\nError. See changed files.\n" && exit 1)' > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 check-lint:
 	@if ! golangci-lint version 2>/dev/null | grep -q "$(GOLANGCI_LINT_VERSION)"; then \

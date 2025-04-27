@@ -1,4 +1,4 @@
-package interpolater
+package interpolator
 
 import (
 	"strings"
@@ -53,7 +53,7 @@ type variable struct {
 	value []rune
 }
 
-type Interpolater struct {
+type Interpolator struct {
 	// All variables to be interpolated.
 	vars map[string]string
 
@@ -79,7 +79,7 @@ type Interpolater struct {
 //	A=1
 //	B=text 1
 //	C=$B
-func (ip *Interpolater) Interpolate(vars map[string]string) {
+func (ip *Interpolator) Interpolate(vars map[string]string) {
 	ip.vars = vars
 
 	for key, value := range ip.vars {
@@ -92,11 +92,11 @@ func (ip *Interpolater) Interpolate(vars map[string]string) {
 	}
 }
 
-func (ip *Interpolater) rawValueContainsVars() bool {
+func (ip *Interpolator) rawValueContainsVars() bool {
 	return strings.IndexByte(ip.rawValue.content, '$') != -1
 }
 
-func (ip *Interpolater) parseVars() {
+func (ip *Interpolator) parseVars() {
 	atVar := false // Notifies we're in the context of a variable: `text $IT_IS_HERE more text`.
 	ip.interpolatedVar.name = nil
 	ip.interpolatedVar.value = nil
@@ -145,7 +145,7 @@ func (ip *Interpolater) parseVars() {
 	}
 }
 
-func (ip *Interpolater) varStarts() bool {
+func (ip *Interpolator) varStarts() bool {
 	// Litteral dollar sign at the end: `text $`.
 	if isDolar(ip.rawValue.current()) && ip.rawValue.atEnd() {
 		return false
@@ -175,15 +175,15 @@ func (ip *Interpolater) varStarts() bool {
 	return true
 }
 
-func (ip *Interpolater) appendToName() {
+func (ip *Interpolator) appendToName() {
 	ip.interpolatedVar.name = append(ip.interpolatedVar.name, ip.rawValue.current())
 }
 
-func (ip *Interpolater) appendCurrentCharacterToNewValue() {
+func (ip *Interpolator) appendCurrentCharacterToNewValue() {
 	ip.interpolatedVar.value = append(ip.interpolatedVar.value, ip.rawValue.current())
 }
 
-func (ip *Interpolater) appendAllToNewValue() {
+func (ip *Interpolator) appendAllToNewValue() {
 	ip.interpolatedVar.value = append(ip.interpolatedVar.value, []rune(ip.vars[string(ip.interpolatedVar.name)])...)
 }
 
@@ -195,6 +195,6 @@ func isDolar(r rune) bool {
 	return r == '$'
 }
 
-func New() *Interpolater {
-	return &Interpolater{}
+func New() *Interpolator {
+	return &Interpolator{}
 }

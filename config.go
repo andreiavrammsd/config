@@ -14,7 +14,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/andreiavrammsd/config/internal/interpolater"
+	"github.com/andreiavrammsd/config/internal/interpolator"
 	"github.com/andreiavrammsd/config/internal/parser"
 	"github.com/andreiavrammsd/config/internal/reader"
 )
@@ -35,7 +35,7 @@ func Load[T any](config *T) *Loader[T] {
 		dotEnvFile:   ".env",
 		parse:        parser.New().Parse,
 		read:         reader.ReadToStruct[T],
-		interpolate:  interpolater.New().Interpolate,
+		interpolate:  interpolator.New().Interpolate,
 	}
 }
 

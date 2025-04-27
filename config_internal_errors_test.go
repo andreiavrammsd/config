@@ -5,7 +5,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/andreiavrammsd/config/internal/interpolater"
+	"github.com/andreiavrammsd/config/internal/interpolator"
 	"github.com/andreiavrammsd/config/internal/parser"
 	"github.com/andreiavrammsd/config/internal/reader"
 )
@@ -64,7 +64,7 @@ func TestEnvFileWithReaderError(t *testing.T) {
 		read: func(_ *Config, _ func(string) string) error {
 			return errors.New("reader error")
 		},
-		interpolate: interpolater.New().Interpolate,
+		interpolate: interpolator.New().Interpolate,
 	}
 
 	err := loader.EnvFile("testdata/.env")

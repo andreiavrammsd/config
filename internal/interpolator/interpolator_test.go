@@ -1,9 +1,9 @@
-package interpolater_test
+package interpolator_test
 
 import (
 	"testing"
 
-	"github.com/andreiavrammsd/config/internal/interpolater"
+	"github.com/andreiavrammsd/config/internal/interpolator"
 )
 
 func assertEqual(t *testing.T, actual, expected string) {
@@ -30,7 +30,7 @@ func TestInterpolate(t *testing.T) {
 	vars["MONGO_OTHER"] = "$A"
 	vars["INTERPOLATED"] = "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $"
 
-	interpolater.New().Interpolate(vars)
+	interpolator.New().Interpolate(vars)
 
 	assertEqual(t, vars["TIMEOUT"], "2000000000")
 	assertEqual(t, vars["ABC"], " string\\\" ")
@@ -67,12 +67,12 @@ func Benchmark_Interpolate(b *testing.B) {
 	vars["MONGO_OTHER"] = "$A"
 	vars["INTERPOLATED"] = "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $"
 
-	interpolater := interpolater.New()
+	interpolator := interpolator.New()
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		interpolater.Interpolate(vars)
+		interpolator.Interpolate(vars)
 	}
 }
