@@ -138,7 +138,10 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 // saveVar stores the variable name and its value,
 // and sets tokens to start scanning for a new variable.
 func (p *Parser) saveVar() {
-	p.vars[p.tokens.name.String()] = cleanVarValue(p.tokens.value.buffer)
+	if len(p.tokens.name.buffer) > 0 {
+		p.vars[p.tokens.name.String()] = cleanVarValue(p.tokens.value.buffer)
+	}
+
 	p.tokens.name.buffer = nil
 	p.tokens.value.buffer = nil
 	p.setToken(nameToken)
