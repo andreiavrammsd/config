@@ -12,15 +12,21 @@ type value struct {
 
 // endsWithDollarSign tests for: `NAME=text + $`.
 func (ip *value) endsWithDollarSign() bool {
-	return ip.atEnd() && ip.peek(-1) != '\\'
+	return ip.atEnd() && !isEscape(ip.peek(-1))
 }
 
 func (ip *value) atEnd() bool {
 	return ip.i == len(ip.content)-1
 }
 
+// nextVarIsDoubleEscaped detects: `\\$“.
 func (ip *value) nextVarIsDoubleEscaped() bool {
-	return ip.current() == '\\' && ip.peek(1) == '\\' && ip.peek(2) == '$'
+	return isEscape(ip.current()) && isEscape(ip.peek(1)) && isDolar(ip.peek(2))
+}
+
+// nextVarIsEscaped detects: `\$“.
+func (ip *value) nextVarIsEscaped() bool {
+	return isEscape(ip.current()) && isDolar(ip.peek(1))
 }
 
 func (ip *value) current() rune {
@@ -33,10 +39,6 @@ func (ip *value) peek(steps int) rune {
 	}
 
 	return rune(ip.content[ip.i+steps])
-}
-
-func (ip *value) nextVarIsEscaped() bool {
-	return ip.current() == '\\' && ip.peek(1) == '$'
 }
 
 func (ip *value) isOpenBrace() bool {
@@ -142,18 +144,18 @@ func (ip *Interpolater) containsVar() bool {
 
 func (ip *Interpolater) varStarts() bool {
 	// Normal variable: `text $VAR text`. Will use its value.
-	if ip.rawValue.current() != '$' {
+	if !isDolar(ip.rawValue.current()) {
 		return false
 	}
 
 	// Variable is double escaped: `text \\$VAR text`. The escape character is actually escaped.
 	// Will use an escape character and variable's value.
-	if ip.rawValue.peek(-2) == '\\' && ip.rawValue.peek(-1) == '\\' {
+	if isEscape(ip.rawValue.peek(-2)) && isEscape(ip.rawValue.peek(-1)) {
 		return true
 	}
 
 	// Variable is escaped: `text \$VAR text`. Actually not a variable. Will use it literally.
-	if ip.rawValue.peek(-1) == '\\' {
+	if isEscape(ip.rawValue.peek(-1)) {
 		return false
 	}
 
@@ -175,6 +177,14 @@ func (ip *Interpolater) appendCurrentCharacterToNewValue() {
 
 func (ip *Interpolater) appendAllToNewValue() {
 	ip.interpolatedVar.value = append(ip.interpolatedVar.value, []rune(ip.vars[string(ip.interpolatedVar.name)])...)
+}
+
+func isEscape(r rune) bool {
+	return r == '\\'
+}
+
+func isDolar(r rune) bool {
+	return r == '$'
 }
 
 func New() *Interpolater {
