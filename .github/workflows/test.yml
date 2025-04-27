@@ -20,10 +20,12 @@ jobs:
           - {
             name: "Go 1.18.x",
             version: "1.18.x",
+            fuzz: false,
           }
           - {
             name: "Go 1.x",
             version: "1.x",
+            fuzz: true,
           }
 
     steps:
@@ -44,6 +46,7 @@ jobs:
       run: make bench
 
     - name: Quick fuzz
+      if: ${{ matrix.config.fuzz == true }}
       run: |
         go test ./internal/parser/... -v -fuzz=Fuzz -fuzztime 30s
         go test ./internal/interpolator/... -v -fuzz=Fuzz -fuzztime 30s
