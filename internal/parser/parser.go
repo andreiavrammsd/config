@@ -96,6 +96,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 
 		switch {
 		case err == io.EOF:
+			// Parsing done, save last variable.
 			if p.tokens.at(valueToken) {
 				p.saveVar()
 			}
@@ -105,32 +106,38 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			return err
 
 		case p.stream.isAtCommentBegin():
+			// Comment begins (`name=value #COMMENT`), save last variable.
 			if p.tokens.at(valueToken) {
 				p.saveVar()
 			}
 			p.tokens.set(commentToken)
 
 		case p.stream.isAtLineEnd():
+			// End of line reached, save last variable.
 			if p.tokens.at(valueToken) {
 				p.saveVar()
 			}
 			p.tokens.set(nameToken)
 
 		case p.tokens.at(commentToken):
+			// If inside a comment, just skip to next rune.
 			continue
 
 		case p.stream.isAtEqualSign():
+			// If equal sign detected, start reading variable value (`name=VALUE #comment`).
 			if p.tokens.at(valueToken) {
 				p.tokens.value.append(p.stream.current)
 			}
 			p.tokens.set(valueToken)
 
 		case p.tokens.at(nameToken):
+			// Read variable name ignoring spaces (`NAME=value #comment`).
 			if !p.stream.isAtSpace() {
 				p.tokens.name.append(p.stream.current)
 			}
 
 		case p.tokens.at(valueToken):
+			// Read variable value (`name=VALUE #comment`).
 			p.tokens.value.append(p.stream.current)
 		}
 	}
