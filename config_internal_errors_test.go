@@ -5,9 +5,9 @@ import (
 	"io"
 	"testing"
 
-	"github.com/andreiavrammsd/config/internal/converter"
 	"github.com/andreiavrammsd/config/internal/interpolater"
 	"github.com/andreiavrammsd/config/internal/parser"
+	"github.com/andreiavrammsd/config/internal/reader"
 )
 
 type Config struct{}
@@ -19,7 +19,7 @@ func TestEnvFileWithParserErrorAtEnvFile(t *testing.T) {
 		configStruct: actual,
 		dotEnvFile:   ".env",
 		parse:        func(_ io.Reader, _ map[string]string) error { return errors.New("parser error with env file") },
-		convert:      converter.ConvertIntoStruct[Config],
+		read:         reader.ReadToStruct[Config],
 	}
 
 	err := loader.EnvFile("testdata/.env")
@@ -40,7 +40,7 @@ func TestEnvFileWithParserErrorBytes(t *testing.T) {
 		configStruct: actual,
 		dotEnvFile:   ".env",
 		parse:        func(_ io.Reader, _ map[string]string) error { return errors.New("parser error with bytes") },
-		convert:      converter.ConvertIntoStruct[Config],
+		read:         reader.ReadToStruct[Config],
 	}
 
 	err := loader.Bytes(nil)
@@ -61,10 +61,10 @@ func TestEnvFileWithConverterError(t *testing.T) {
 		configStruct: actual,
 		dotEnvFile:   ".env",
 		parse:        parser.New().Parse,
-		convert: func(_ Config, _ func(string) string) error {
+		read: func(_ Config, _ func(string) string) error {
 			return errors.New("converter error")
 		},
-		interpolater: interpolater.New(),
+		interpolate: interpolater.New().Interpolate,
 	}
 
 	err := loader.EnvFile("testdata/.env")

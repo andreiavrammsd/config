@@ -1,9 +1,9 @@
-package converter_test
+package reader_test
 
 import (
 	"testing"
 
-	"github.com/andreiavrammsd/config/internal/converter"
+	"github.com/andreiavrammsd/config/internal/reader"
 )
 
 type config struct {
@@ -73,7 +73,7 @@ func assertEqual[T comparable](t *testing.T, actual, expected T) {
 func TestConvertIntoStruct(t *testing.T) {
 	configStruct := config{}
 
-	err := converter.ConvertIntoStruct(&configStruct, readValue)
+	err := reader.ReadToStruct(&configStruct, readValue)
 
 	if err != nil {
 		t.Fatal("error not expected")
@@ -108,7 +108,7 @@ func TestConvertIntoStruct(t *testing.T) {
 func TestConvertIntoStructWithValue(t *testing.T) {
 	configStruct := struct{}{}
 
-	err := converter.ConvertIntoStruct(configStruct, readValue)
+	err := reader.ReadToStruct(configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -122,7 +122,7 @@ func TestConvertIntoStructWithValue(t *testing.T) {
 func TestConvertIntoStructWithNonStruct(t *testing.T) {
 	var i *int
 
-	err := converter.ConvertIntoStruct(i, readValue)
+	err := reader.ReadToStruct(i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -136,7 +136,7 @@ func TestConvertIntoStructWithNonStruct(t *testing.T) {
 func TestConvertIntoStructWithNilStruct(t *testing.T) {
 	var i *struct{}
 
-	err := converter.ConvertIntoStruct(i, readValue)
+	err := reader.ReadToStruct(i, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -156,7 +156,7 @@ func TestConvertIntoStructWithIntParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&configStruct, readValue)
+	err := reader.ReadToStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -176,7 +176,7 @@ func TestConvertIntoStructWithUintParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&configStruct, readValue)
+	err := reader.ReadToStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -196,7 +196,7 @@ func TestConvertIntoStructWithFloat32ParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&configStruct, readValue)
+	err := reader.ReadToStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -216,7 +216,7 @@ func TestConvertIntoStructWithFloat64ParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&configStruct, readValue)
+	err := reader.ReadToStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -236,7 +236,7 @@ func TestConvertIntoStructWithBoolParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&configStruct, readValue)
+	err := reader.ReadToStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -260,7 +260,7 @@ func TestConvertIntoStructWithInnerStructParseError(t *testing.T) {
 		return vars[s]
 	}
 
-	err := converter.ConvertIntoStruct(&configStruct, readValue)
+	err := reader.ReadToStruct(&configStruct, readValue)
 
 	if err == nil {
 		t.Fatal("error expected")

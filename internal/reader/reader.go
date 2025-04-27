@@ -1,4 +1,4 @@
-package converter
+package reader
 
 import (
 	"errors"
@@ -14,9 +14,9 @@ const (
 
 type ReadValue = func(string) string
 
-// ConvertIntoStruct take a pointer to a struct and, for each property in the struct (recursively),
+// ReadToStruct take a pointer to a struct and, for each property in the struct (recursively),
 // generates a key that it passes to the given readValue function which must return the value for the property.
-func ConvertIntoStruct[T any](configStruct T, readValue ReadValue) error {
+func ReadToStruct[T any](configStruct T, readValue ReadValue) error {
 	typ := reflect.TypeOf(configStruct)
 
 	if typ.Kind() != reflect.Ptr {
