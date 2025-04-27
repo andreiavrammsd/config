@@ -68,10 +68,7 @@ func TestEnvFile(t *testing.T) {
 		os.Chdir(cwd) // nolint:errcheck
 	}()
 
-	_, expected, err := testdata(".env")
-	if err != nil {
-		t.Fatal(err)
-	}
+	_, expected := testdata(".env")
 
 	actual := Config{}
 	if err := config.Load(&actual).EnvFile(); err != nil {
@@ -84,10 +81,7 @@ func TestEnvFile(t *testing.T) {
 }
 
 func TestEnvFileWithCustomEnvFiles(t *testing.T) {
-	_, ex, err := testdata(testdataFile)
-	if err != nil {
-		t.Fatal(err)
-	}
+	_, ex := testdata(testdataFile)
 
 	expected := envFile{
 		AAA:    "BBB",
@@ -131,10 +125,7 @@ func TestEnvFileWithMultipleFilesOneMissing(t *testing.T) {
 }
 
 func TestBytes(t *testing.T) {
-	input, expected, err := testdata(testdataFile)
-	if err != nil {
-		t.Fatal(err)
-	}
+	input, expected := testdata(testdataFile)
 
 	actual := Config{}
 	if err := config.Load(&actual).Bytes(input); err != nil {
@@ -147,10 +138,7 @@ func TestBytes(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	input, expected, err := testdata(testdataFile)
-	if err != nil {
-		t.Fatal(err)
-	}
+	input, expected := testdata(testdataFile)
 
 	actual := Config{}
 	if err := config.Load(&actual).String(string(input)); err != nil {
@@ -204,10 +192,7 @@ func TestJson(t *testing.T) {
 	   "Default":"default value"
 	}`)
 
-	_, expected, err := testdata(testdataFile)
-	if err != nil {
-		t.Fatal(err)
-	}
+	_, expected := testdata(testdataFile)
 
 	actual := Config{}
 	if err := config.Load(&actual).JSON(input); err != nil {
@@ -232,10 +217,10 @@ func TestJsonWithInvalidInput(t *testing.T) {
 	}
 }
 
-func testdata(file string) ([]byte, Config, error) {
+func testdata(file string) ([]byte, Config) {
 	input, err := os.ReadFile(file)
 	if err != nil {
-		return nil, Config{}, err
+		panic(err)
 	}
 
 	expected := Config{
@@ -304,5 +289,5 @@ func testdata(file string) ([]byte, Config, error) {
 		Default:      "default value",
 	}
 
-	return input, expected, nil
+	return input, expected
 }

@@ -148,7 +148,7 @@ func TestReadToStructWithIntParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseInt: parsing \"invalid int value\": invalid syntax" {
+	if err.Error() != "field Value (strconv.ParseInt: parsing \"invalid int value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -168,7 +168,7 @@ func TestReadToStructWithUintParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseUint: parsing \"invalid uint value\": invalid syntax" {
+	if err.Error() != "field Value (strconv.ParseUint: parsing \"invalid uint value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -188,7 +188,7 @@ func TestReadToStructWithFloat32ParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseFloat: parsing \"invalid float32 value\": invalid syntax" {
+	if err.Error() != "field Value (strconv.ParseFloat: parsing \"invalid float32 value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -208,7 +208,7 @@ func TestReadToStructWithFloat64ParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseFloat: parsing \"invalid float64 value\": invalid syntax" {
+	if err.Error() != "field Value (strconv.ParseFloat: parsing \"invalid float64 value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -228,7 +228,7 @@ func TestReadToStructWithBoolParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseBool: parsing \"invalid bool value\": invalid syntax" {
+	if err.Error() != "field Value (strconv.ParseBool: parsing \"invalid bool value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
@@ -252,7 +252,7 @@ func TestReadToStructWithInnerStructParseError(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "strconv.ParseInt: parsing \"invalid struct integer value\": invalid syntax" {
+	if err.Error() != "field Integer (strconv.ParseInt: parsing \"invalid struct integer value\": invalid syntax)" {
 		t.Fatal("incorrect error message:", err)
 	}
 }

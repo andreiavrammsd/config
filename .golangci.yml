@@ -46,6 +46,7 @@ linters:
     - decorder
     - bidichk
     - asasalint
+    - wrapcheck
   settings:
     dupl:
       threshold: 100

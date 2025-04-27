@@ -2,6 +2,7 @@ package reader
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -111,31 +112,31 @@ func setFieldValue(field *reflect.StructField, fieldValue reflect.Value, value s
 	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
 		v, err := strconv.ParseInt(value, 10, 0)
 		if err != nil {
-			return err
+			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 		fieldValue.SetInt(v)
 	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
 		v, err := strconv.ParseUint(value, 10, 0)
 		if err != nil {
-			return err
+			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 		fieldValue.SetUint(v)
 	case reflect.Float32:
 		v, err := strconv.ParseFloat(value, 32)
 		if err != nil {
-			return err
+			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 		fieldValue.SetFloat(v)
 	case reflect.Float64:
 		v, err := strconv.ParseFloat(value, 64)
 		if err != nil {
-			return err
+			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 		fieldValue.SetFloat(v)
 	case reflect.Bool:
 		v, err := strconv.ParseBool(value)
 		if err != nil {
-			return err
+			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 		fieldValue.SetBool(v)
 	case reflect.Slice:
