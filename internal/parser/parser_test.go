@@ -5,8 +5,10 @@ import (
 	"errors"
 	"io"
 	"os"
+	"reflect"
 	"runtime"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/andreiavrammsd/config/internal/parser"
 )
@@ -171,6 +173,48 @@ func Benchmark_Parse(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
+}
+
+func FuzzParse(f *testing.F) {
+	testcases := []string{string(testdata("testdata/.env")), "", " "}
+	for _, tc := range testcases {
+		f.Add(tc)
+	}
+
+	p := parser.New()
+
+	f.Fuzz(func(t *testing.T, input string) {
+		varsFirst := make(map[string]string)
+		if err := p.Parse(bytes.NewReader([]byte(input)), varsFirst); err != nil {
+			t.Error(err)
+		}
+
+		varsSecond := make(map[string]string)
+		if err := p.Parse(bytes.NewReader([]byte(input)), varsSecond); err != nil {
+			t.Error(err)
+		}
+
+		if !reflect.DeepEqual(varsFirst, varsSecond) {
+			t.Error("Different results")
+		}
+
+		for key, firstValue := range varsFirst {
+			secondValue := varsSecond[key]
+
+			if firstValue != secondValue {
+				t.Errorf("Before: %q, after: %q", firstValue, secondValue)
+			}
+			if !utf8.ValidString(key) {
+				t.Errorf("Parse produced invalid UTF-8 string for key: %q", key)
+			}
+			if !utf8.ValidString(firstValue) {
+				t.Errorf("Parse produced invalid UTF-8 string for value in first map: %q", firstValue)
+			}
+			if !utf8.ValidString(secondValue) {
+				t.Errorf("Parse produced invalid UTF-8 string for value in second map %q", secondValue)
+			}
+		}
+	})
 }
 
 func testdata(file string) []byte {
