@@ -3,6 +3,7 @@ package parser
 import (
 	"bufio"
 	"io"
+	"strings"
 	"unicode"
 )
 
@@ -50,12 +51,12 @@ type token struct {
 	buffer []rune
 }
 
-func (t *token) append(r rune) {
-	t.buffer = append(t.buffer, r)
-}
-
 func (t token) String() string {
 	return string(t.buffer)
+}
+
+func (t *token) append(r rune) {
+	t.buffer = append(t.buffer, r)
 }
 
 type tokens struct {
