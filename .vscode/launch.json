@@ -1,0 +1,45 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Config",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-test.v",
+            ]
+        },
+        {
+            "name": "Debug Parser",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/internal/parser",
+            "args": [
+                "-test.v",
+            ]
+        },
+        {
+            "name": "Debug Interpolator",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/internal/interpolator",
+            "args": [
+                "-test.v",
+            ]
+        },
+        {
+            "name": "Debug Reader",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/internal/reader",
+            "args": [
+                "-test.v",
+            ]
+        }
+    ]
+}

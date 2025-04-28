@@ -21,7 +21,7 @@ coverage-report: coverage
 	go tool cover -html=$(COVER_PROFILE)
 
 precommithook:
-	echo '#!/bin/sh\n\nmake || (echo "\nError. See changed files.\n" && exit 1)' > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+	echo '#!/bin/sh\n\nmake' > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 check-lint:
 	@if ! golangci-lint version 2>/dev/null | grep -q "$(GOLANGCI_LINT_VERSION)"; then \
