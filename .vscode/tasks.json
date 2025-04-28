@@ -1,0 +1,42 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Test and Lint",
+            "type": "shell",
+            "command": "make",
+            "args": [],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Bench",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "bench"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Install pre-commit hook",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "precommithook"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "problemMatcher": []
+        }
+    ]
+}
