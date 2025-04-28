@@ -104,34 +104,6 @@ func TestReadToStruct(t *testing.T) {
 	assertEqual(t, configStruct.Struct.Integer, 123)
 }
 
-func TestReadToStructWithNonStruct(t *testing.T) {
-	var i int
-
-	err := reader.ReadToStruct(&i, readValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "non struct passed" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func TestReadToStructWithNilPointer(t *testing.T) {
-	var configStruct *struct{}
-
-	err := reader.ReadToStruct(configStruct, readValue)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "nil pointer passed" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
 func TestReadToStructWithIntParseError(t *testing.T) {
 	configStruct := struct{ Value int }{}
 

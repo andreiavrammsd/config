@@ -5,62 +5,14 @@ import (
 	"os"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/andreiavrammsd/config"
+	"github.com/andreiavrammsd/config/testdata"
 )
-
-type Struct struct {
-	Field string
-}
-
-type Config struct {
-	Mongo struct {
-		Database struct {
-			Host       string `env:"MONGO_DATABASE_HOST"`
-			Collection struct {
-				Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
-				Other byte   `env:"MONGO_OTHER"`
-				X     rune   `env:"MONGO_X"`
-			}
-		}
-	}
-	Redis struct {
-		Connection struct {
-			Host string
-			Port int `env:"REDIS_PORT"`
-		}
-	}
-	String       string `env:"ABC"   default:"ignored"`
-	Struct       Struct
-	StructPtr    *Struct
-	D            int64
-	E            int
-	ENeg         int `env:"E_NEG"`
-	UD           uint64
-	UE           uint
-	F64          float64
-	Timeout      time.Duration
-	C            int32
-	UC           uint32
-	F32          float32
-	B            int16
-	UB           uint16
-	A            int8
-	UA           uint8
-	IsSet        bool
-	Interpolated string
-	Default      string `            default:"default value"`
-}
-
-type envFile struct {
-	AAA string
-	Config
-}
 
 const testdataFile string = "testdata/.env"
 
-func TestEnvFile(t *testing.T) {
+func TestFromFileWithDefaultFile(t *testing.T) {
 	// Temporarily switch to testdata directory to read .env by default
 	cwd, _ := os.Getwd() // nolint:errcheck
 	os.Chdir("testdata") // nolint:errcheck
@@ -68,10 +20,10 @@ func TestEnvFile(t *testing.T) {
 		os.Chdir(cwd) // nolint:errcheck
 	}()
 
-	_, expected := testdata(".env")
+	expected := testdata.GetExpectedResult()
 
-	actual := Config{}
-	if err := config.Load(&actual).EnvFile(); err != nil {
+	actual := testdata.Config{}
+	if err := config.New().FromFile(&actual); err != nil {
 		t.Fatal(err)
 	}
 
@@ -80,16 +32,14 @@ func TestEnvFile(t *testing.T) {
 	}
 }
 
-func TestEnvFileWithCustomEnvFiles(t *testing.T) {
-	_, ex := testdata(testdataFile)
-
-	expected := envFile{
+func TestFromFileWithCustomFiles(t *testing.T) {
+	expected := testdata.EnvFile{
 		AAA:    "BBB",
-		Config: ex,
+		Config: testdata.GetExpectedResult(),
 	}
 
-	actual := envFile{}
-	if err := config.Load(&actual).EnvFile("testdata/.env", "testdata/.env2"); err != nil {
+	actual := testdata.EnvFile{}
+	if err := config.New().FromFile(&actual, "testdata/.env", "testdata/.env2"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -98,37 +48,38 @@ func TestEnvFileWithCustomEnvFiles(t *testing.T) {
 	}
 }
 
-func TestEnvFileWithOneFileWhichIsMissing(t *testing.T) {
-	actual := envFile{}
-	err := config.Load(&actual).EnvFile("somefile")
+func TestFromFileWithOneMissingFile(t *testing.T) {
+	actual := testdata.EnvFile{}
+	err := config.New().FromFile(&actual, "somefile")
 
 	if err == nil {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: open somefile: no such file or directory" {
+	if err.Error() != "open somefile: no such file or directory" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
 
-func TestEnvFileWithMultipleFilesOneMissing(t *testing.T) {
-	actual := envFile{}
-	err := config.Load(&actual).EnvFile("testdata/.env", "someotherfile", "testdata/.env2")
+func TestFromFileWithMultipleFilesWhenOneIsMissing(t *testing.T) {
+	actual := testdata.EnvFile{}
+	err := config.New().FromFile(&actual, "testdata/.env", "someotherfile", "testdata/.env2")
 
 	if err == nil {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: open someotherfile: no such file or directory" {
+	if err.Error() != "open someotherfile: no such file or directory" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
 
-func TestBytes(t *testing.T) {
-	input, expected := testdata(testdataFile)
+func TestFromBytes(t *testing.T) {
+	input := testdata.ReadInputFile(testdataFile)
+	expected := testdata.GetExpectedResult()
 
-	actual := Config{}
-	if err := config.Load(&actual).Bytes(input); err != nil {
+	actual := testdata.Config{}
+	if err := config.New().FromBytes(&actual, input); err != nil {
 		t.Fatal(err)
 	}
 
@@ -137,157 +88,104 @@ func TestBytes(t *testing.T) {
 	}
 }
 
-func TestString(t *testing.T) {
-	input, expected := testdata(testdataFile)
-
-	actual := Config{}
-	if err := config.Load(&actual).String(string(input)); err != nil {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("\nhave: %v\nwant: %v", actual, expected)
-	}
-}
-
-func TestJson(t *testing.T) {
-	input := json.RawMessage(`{
-	   "StructPtr":null,
-	   "String":" string\\\" ",
-	   "A":1,
-	   "B":2,
-	   "C":3,
-	   "D":4,
-	   "E":5,
-	   "ENeg":-1,
-	   "UA":1,
-	   "UB":2,
-	   "UC":3,
-	   "UD":4,
-	   "UE":5,
-	   "F32":15425.2231,
-	   "F64":245232212.9844448,
-	   "IsSet":true,
-	   "Redis":{
-		  "Connection":{
-			 "Host":" localhost ",
-			 "Port":6379
-		  }
-	   },
-	   "Timeout":2000000000,
-	   "Mongo":{
-		  "Database":{
-			 "Host":"mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb",
-			 "Collection":{
-				"Name":"dXM9ZXJz",
-				"Other":1,
-				"X":97
-			 }
-		  }
-	   },
-	   "Struct":{
-		  "Field":"Value"
-	   },
-	   "Interpolated":"$B env_1 $ $B \\3 6379 + $",
-	   "Default":"default value"
-	}`)
-
-	_, expected := testdata(testdataFile)
-
-	actual := Config{}
-	if err := config.Load(&actual).JSON(input); err != nil {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("\nhave: %v\nwant: %v", actual, expected)
-	}
-}
-
-func TestJsonWithInvalidInput(t *testing.T) {
-	input := json.RawMessage(`invalid json`)
-
-	err := config.Load(&Config{}).JSON(input)
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "config: invalid character 'i' looking for beginning of value" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func testdata(file string) ([]byte, Config) {
-	input, err := os.ReadFile(file)
+func TestFromBytesWithNilInput(t *testing.T) {
+	err := config.New().FromBytes(&struct{}{}, nil)
 	if err != nil {
+		t.Fatal("error not expected")
+	}
+}
+
+func TestFromJSON(t *testing.T) {
+	jsonString := testdata.ReadInputFile("testdata/env.json")
+	expected := testdata.GetExpectedResult()
+
+	var input json.RawMessage
+	if err := json.Unmarshal(jsonString, &input); err != nil {
 		panic(err)
 	}
 
-	expected := Config{
-		String: " string\\\" ",
-		A:      1,
-		B:      2,
-		C:      3,
-		D:      4,
-		E:      5,
-		ENeg:   -1,
-		UA:     1,
-		UB:     2,
-		UC:     3,
-		UD:     4,
-		UE:     5,
-		F32:    15425.2231,
-		F64:    245232212.9844448,
-		IsSet:  true,
-		Redis: struct {
-			Connection struct {
-				Host string
-				Port int `env:"REDIS_PORT"`
-			}
-		}{
-			Connection: struct {
-				Host string
-				Port int `env:"REDIS_PORT"`
-			}{
-				Host: " localhost ",
-				Port: 6379,
-			},
-		},
-		Timeout: time.Second * 2,
-		Struct: Struct{
-			Field: "Value",
-		},
-		Mongo: struct {
-			Database struct {
-				Host       string `env:"MONGO_DATABASE_HOST"`
-				Collection struct {
-					Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
-					Other byte   `env:"MONGO_OTHER"`
-					X     rune   `env:"MONGO_X"`
-				}
-			}
-		}{Database: struct {
-			Host       string `env:"MONGO_DATABASE_HOST"`
-			Collection struct {
-				Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
-				Other byte   `env:"MONGO_OTHER"`
-				X     rune   `env:"MONGO_X"`
-			}
-		}{
-			Host: "mongodb://user:pass==@host.tld:955/?ssl=true&replicaSet=globaldb",
-			Collection: struct {
-				Name  []byte `env:"MONGO_DATABASE_COLLECTION_NAME"`
-				Other byte   `env:"MONGO_OTHER"`
-				X     rune   `env:"MONGO_X"`
-			}{
-				Name:  []byte("us=ers"),
-				Other: 1,
-				X:     'a',
-			},
-		}},
-		Interpolated: "$B env_1 $ $B \\3 6379 + $",
-		Default:      "default value",
+	actual := testdata.Config{}
+	if err := config.New().FromJSON(&actual, input); err != nil {
+		t.Fatal(err)
 	}
 
-	return input, expected
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("\nhave: %v\nwant: %v", actual, expected)
+	}
+}
+
+func TestFromJSONWithNilInput(t *testing.T) {
+	err := config.New().FromJSON(&struct{}{}, nil)
+
+	if err == nil {
+		t.Fatal("error expected")
+	}
+
+	if err.Error() != "unexpected end of JSON input" {
+		t.Fatal("incorrect error message:", err)
+	}
+}
+
+func TestFromJSONWithInvalidInput(t *testing.T) {
+	input := json.RawMessage(`invalid json`)
+
+	err := config.New().FromJSON(&struct{}{}, input)
+
+	if err == nil {
+		t.Fatal("error expected")
+	}
+
+	if err.Error() != "invalid character 'i' looking for beginning of value" {
+		t.Fatal("incorrect error message:", err)
+	}
+}
+
+func TestWithNilConfigType(t *testing.T) {
+	err := config.New().FromFile(nil)
+
+	if err == nil {
+		t.Fatal("error expected")
+	}
+
+	if err != config.ErrNilPointerInput {
+		t.Fatal("incorrect error message:", err)
+	}
+}
+
+func TestWithValueConfigType(t *testing.T) {
+	err := config.New().FromEnv(struct{}{})
+
+	if err == nil {
+		t.Fatal("error expected")
+	}
+
+	if err != config.ErrValueInput {
+		t.Fatal("incorrect error message:", err)
+	}
+}
+
+func TestWithNonStructConfigType(t *testing.T) {
+	var i int
+	err := config.New().FromBytes(&i, nil) // nil bytes?
+
+	if err == nil {
+		t.Fatal("error expected")
+	}
+
+	if err != config.ErrNonStructInput {
+		t.Fatal("incorrect error message:", err)
+	}
+}
+
+func TestFromJSONWithInvalidConfigType(t *testing.T) {
+	var i int
+	err := config.New().FromJSON(&i, nil)
+
+	if err == nil {
+		t.Fatal("error expected")
+	}
+
+	if err != config.ErrNonStructInput {
+		t.Fatal("incorrect error message:", err)
+	}
 }

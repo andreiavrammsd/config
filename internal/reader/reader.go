@@ -1,7 +1,6 @@
 package reader
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -15,25 +14,14 @@ const (
 
 type ReadValue = func(string) string
 
-var (
-	errNilPointer = errors.New("nil pointer passed")
-	errNonStruct  = errors.New("non struct passed")
-)
-
 // ReadToStruct take a pointer to a struct and, for each property in the struct (recursively),
 // generates a key that it passes to the given readValue function which must return the value for the property.
-func ReadToStruct[T any](configStruct *T, readValue ReadValue) error {
-	if configStruct == nil {
-		return errNilPointer
-	}
+//
+// Panics for types different than pointer to a struct.
+func ReadToStruct(i any, readValue ReadValue) error {
+	typ := reflect.TypeOf(i)
 
-	typ := reflect.TypeOf(configStruct)
-
-	if typ.Elem().Kind() != reflect.Struct {
-		return errNonStruct
-	}
-
-	return parse(typ, reflect.ValueOf(configStruct), readValue, "")
+	return parse(typ, reflect.ValueOf(i), readValue, "")
 }
 
 func parse(typ reflect.Type, val reflect.Value, readValue ReadValue, path string) error {
