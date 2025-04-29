@@ -12,19 +12,20 @@ const (
 	defaultValueTag = "default"
 )
 
-type ReadValue = func(*string) string
+type readValue = func(*string) string
 
-// ReadToStruct take a pointer to a struct and, for each property in the struct (recursively),
-// generates a key that it passes to the given readValue function which must return the value for the property.
+// ReadToStruct takes a pointer to a struct and a read function (accepts a key and returns its associated value).
+// For each property of the struct it (recursively) generates a key that represents the property.
+// Then binds a value to the property by passing the generated they to the read function.
 //
 // Panics for types different than pointer to a struct.
-func ReadToStruct(i any, readValue ReadValue) error {
-	typ := reflect.TypeOf(i)
+func ReadToStruct(structPtr any, readValue readValue) error {
+	typ := reflect.TypeOf(structPtr)
 
-	return parse(typ, reflect.ValueOf(i), readValue, "")
+	return parse(typ, reflect.ValueOf(structPtr), readValue, "")
 }
 
-func parse(typ reflect.Type, val reflect.Value, readValue ReadValue, path string) error {
+func parse(typ reflect.Type, val reflect.Value, readValue readValue, path string) error {
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
@@ -62,7 +63,7 @@ func parse(typ reflect.Type, val reflect.Value, readValue ReadValue, path string
 	return nil
 }
 
-func getValue(field *reflect.StructField, readValue ReadValue, path string) (value string) {
+func getValue(field *reflect.StructField, readValue readValue, path string) (value string) {
 	// Generate key and read value.
 	key := generateKey(field, path)
 	value = readValue(&key)
