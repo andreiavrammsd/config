@@ -158,7 +158,7 @@ func TestParseWithReaderError(t *testing.T) {
 	}
 }
 
-// Benchmark_Parse-8                1913996               618.2 ns/op          4192 B/op          2 allocs/op.
+// Benchmark_Parse-8        1623301               709.7 ns/op          4192 B/op          2 allocs/op.
 func Benchmark_Parse(b *testing.B) {
 	p := parser.New()
 	reader := bytes.NewReader(testdata("testdata/.env"))
