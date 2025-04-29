@@ -1,12 +1,12 @@
 // Package `config` loads configuration values into given struct.
 //
-// Sources: environment variables from environment or from files, byte array, json.
-//
 // - A pointer to the struct must be passed.
 // - Fields must be exported. Unexported fields will be ignored.
 // - A field can have the `env` tag which defines the key of the value. If no tag provided, the key will be
 // the uppercase full path of the field (all the fields names starting root until current field, joined by underscore).
 // - The `json` tag will be used for loading from JSON.
+//
+// Sources: environment variables from environment or from files, byte array, json.
 package config
 
 import (

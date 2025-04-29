@@ -9,6 +9,8 @@ Package `config` loads configuration values into given struct.
 - A field can have the `env` tag which defines the key of the value. If no tag provided, the key will be the uppercase full path of the field (all the fields names starting root until current field, joined by underscore).
 - The `json` tag will be used for loading from JSON.
 
+Sources: environment variables from environment or from files, byte array, json.
+
 ```go
 package main
 
@@ -28,7 +30,7 @@ func main() {
 	input := []byte(`CUSTOM_USERNAME_TAG=msd # username`)
 
 	cfg := Config{}
-	if err := config.Load(&cfg).Bytes(input); err != nil {
+	if err := config.New().FromBytes(&cfg, input); err != nil {
 		log.Fatalf("cannot load config: %s", err)
 	}
 
@@ -37,7 +39,7 @@ func main() {
 }
 ```
 
-## Docs
+## Documentation
 
 [![GoDoc](https://godoc.org/github.com/andreiavrammsd/config?status.svg)](https://godoc.org/github.com/andreiavrammsd/config)
 
@@ -53,4 +55,4 @@ See [examples](./examples_test.go) and [tests](./config_test.go).
 
 ## Testing and QA tools for development
 
-See [Makefile](./Makefile).
+See [Makefile](./Makefile) and [VS Code setup](.vscode).
