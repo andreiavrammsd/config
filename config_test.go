@@ -20,7 +20,7 @@ func TestFromFileWithDefaultFile(t *testing.T) {
 		os.Chdir(cwd) // nolint:errcheck
 	}()
 
-	expected := testdata.GetExpectedResult()
+	expected := testdata.GetExpectedOutput()
 
 	actual := testdata.Config{}
 	if err := config.New().FromFile(&actual); err != nil {
@@ -35,7 +35,7 @@ func TestFromFileWithDefaultFile(t *testing.T) {
 func TestFromFileWithCustomFiles(t *testing.T) {
 	expected := testdata.EnvFile{
 		AAA:    "BBB",
-		Config: testdata.GetExpectedResult(),
+		Config: testdata.GetExpectedOutput(),
 	}
 
 	actual := testdata.EnvFile{}
@@ -76,7 +76,7 @@ func TestFromFileWithMultipleFilesWhenOneIsMissing(t *testing.T) {
 
 func TestFromBytes(t *testing.T) {
 	input := testdata.ReadInputFile(testdataFile)
-	expected := testdata.GetExpectedResult()
+	expected := testdata.GetExpectedOutput()
 
 	actual := testdata.Config{}
 	if err := config.New().FromBytes(&actual, input); err != nil {
@@ -97,7 +97,7 @@ func TestFromBytesWithNilInput(t *testing.T) {
 
 func TestFromJSON(t *testing.T) {
 	jsonString := testdata.ReadInputFile("testdata/env.json")
-	expected := testdata.GetExpectedResult()
+	expected := testdata.GetExpectedOutput()
 
 	var input json.RawMessage
 	if err := json.Unmarshal(jsonString, &input); err != nil {

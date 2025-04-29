@@ -62,7 +62,7 @@ func ReadInputFile(file string) []byte {
 	return input
 }
 
-func GetExpectedResult() Config {
+func GetExpectedOutput() Config {
 	return Config{
 		String: " string\\\" ",
 		A:      1,
