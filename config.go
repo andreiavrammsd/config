@@ -36,6 +36,7 @@ var (
 
 const dotEnvFile string = ".env"
 
+// Config exposes the public API.
 type Config struct {
 	parse       func(r io.Reader, vars map[string]string) error
 	interpolate func(map[string]string)
@@ -43,6 +44,7 @@ type Config struct {
 }
 
 // FromFile loads config into struct from one or multiple dotenv files.
+// If no file given, uses .env by default.
 func (c Config) FromFile(config any, files ...string) error {
 	if err := validateConfigType(config); err != nil {
 		return err
