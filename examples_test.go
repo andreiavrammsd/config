@@ -33,8 +33,8 @@ func ExampleConfig_FromEnv() {
 }
 
 func ExampleConfig_FromBytes() {
-	input := []byte(`USERNAME=msd # username`)
 	configuration := Configuration{}
+	input := []byte(`USERNAME=msd # username`)
 
 	c := config.New()
 
