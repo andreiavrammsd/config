@@ -35,7 +35,7 @@ type config struct {
 	}
 }
 
-func readValue(s string) string {
+func readValue(s *string) string {
 	vars := make(map[string]string)
 	vars["MyString"] = "string"
 	vars["SDefault"] = ""
@@ -61,7 +61,7 @@ func readValue(s string) string {
 
 	vars["STRUCT_INTEGER"] = "123"
 
-	return vars[s]
+	return vars[*s]
 }
 
 func assertEqual[T comparable](t *testing.T, actual, expected T) {
@@ -107,10 +107,10 @@ func TestReadToStruct(t *testing.T) {
 func TestReadToStructWithIntParseError(t *testing.T) {
 	configStruct := struct{ Value int }{}
 
-	readValue := func(s string) string {
+	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid int value"
-		return vars[s]
+		return vars[*s]
 	}
 
 	err := reader.ReadToStruct(&configStruct, readValue)
@@ -127,10 +127,10 @@ func TestReadToStructWithIntParseError(t *testing.T) {
 func TestReadToStructWithUintParseError(t *testing.T) {
 	configStruct := struct{ Value uint }{}
 
-	readValue := func(s string) string {
+	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid uint value"
-		return vars[s]
+		return vars[*s]
 	}
 
 	err := reader.ReadToStruct(&configStruct, readValue)
@@ -147,10 +147,10 @@ func TestReadToStructWithUintParseError(t *testing.T) {
 func TestReadToStructWithFloat32ParseError(t *testing.T) {
 	configStruct := struct{ Value float32 }{}
 
-	readValue := func(s string) string {
+	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid float32 value"
-		return vars[s]
+		return vars[*s]
 	}
 
 	err := reader.ReadToStruct(&configStruct, readValue)
@@ -167,10 +167,10 @@ func TestReadToStructWithFloat32ParseError(t *testing.T) {
 func TestReadToStructWithFloat64ParseError(t *testing.T) {
 	configStruct := struct{ Value float64 }{}
 
-	readValue := func(s string) string {
+	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid float64 value"
-		return vars[s]
+		return vars[*s]
 	}
 
 	err := reader.ReadToStruct(&configStruct, readValue)
@@ -187,10 +187,10 @@ func TestReadToStructWithFloat64ParseError(t *testing.T) {
 func TestReadToStructWithBoolParseError(t *testing.T) {
 	configStruct := struct{ Value bool }{}
 
-	readValue := func(s string) string {
+	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid bool value"
-		return vars[s]
+		return vars[*s]
 	}
 
 	err := reader.ReadToStruct(&configStruct, readValue)
@@ -211,10 +211,10 @@ func TestReadToStructWithInnerStructParseError(t *testing.T) {
 		}
 	}{}
 
-	readValue := func(s string) string {
+	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["STRUCT_INTEGER"] = "invalid struct integer value"
-		return vars[s]
+		return vars[*s]
 	}
 
 	err := reader.ReadToStruct(&configStruct, readValue)

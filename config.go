@@ -38,7 +38,7 @@ const dotEnvFile string = ".env"
 
 type Config struct {
 	parse       func(r io.Reader, vars map[string]string) error
-	read        func(configStruct any, data func(string) string) error
+	read        func(configStruct any, data func(*string) string) error
 	interpolate func(map[string]string)
 }
 
@@ -69,7 +69,7 @@ func (c Config) FromFile(config any, files ...string) error {
 
 	c.interpolate(vars)
 
-	if err := c.read(config, func(s string) string { return vars[s] }); err != nil {
+	if err := c.read(config, func(s *string) string { return vars[*s] }); err != nil {
 		return err
 	}
 
@@ -82,7 +82,7 @@ func (c Config) FromEnv(config any) error {
 		return err
 	}
 
-	return c.read(config, os.Getenv)
+	return c.read(config, func(s *string) string { return os.Getenv(*s) })
 }
 
 // FromBytes loads config into struct from byte array.
@@ -99,7 +99,7 @@ func (c Config) FromBytes(config any, input []byte) error {
 
 	c.interpolate(vars)
 
-	return c.read(config, func(s string) string { return vars[s] })
+	return c.read(config, func(s *string) string { return vars[*s] })
 }
 
 // FromJSON loads config into struct from json.

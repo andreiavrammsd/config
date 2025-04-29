@@ -51,7 +51,7 @@ func TestFromFileWithParserErrorBytes(t *testing.T) {
 func TestFromFileWithReaderError(t *testing.T) {
 	loader := &Config{
 		parse: parser.New().Parse,
-		read: func(_ any, _ func(string) string) error {
+		read: func(_ any, _ func(*string) string) error {
 			return errors.New("reader error")
 		},
 		interpolate: interpolator.New().Interpolate,

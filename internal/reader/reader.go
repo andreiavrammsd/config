@@ -12,7 +12,7 @@ const (
 	defaultValueTag = "default"
 )
 
-type ReadValue = func(string) string
+type ReadValue = func(*string) string
 
 // ReadToStruct take a pointer to a struct and, for each property in the struct (recursively),
 // generates a key that it passes to the given readValue function which must return the value for the property.
@@ -65,11 +65,11 @@ func parse(typ reflect.Type, val reflect.Value, readValue ReadValue, path string
 func getValue(field *reflect.StructField, readValue ReadValue, path string) (value string) {
 	// Generate key and read value.
 	key := generateKey(field, path)
-	value = readValue(key)
+	value = readValue(&key)
 
 	// If empty, read value from field name.
 	if value == "" {
-		value = readValue(field.Name)
+		value = readValue(&field.Name)
 	}
 
 	// If empty, get default.
