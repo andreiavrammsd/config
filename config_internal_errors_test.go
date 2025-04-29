@@ -9,15 +9,12 @@ import (
 	"github.com/andreiavrammsd/config/internal/parser"
 )
 
-type Configuration struct{}
-
 func TestFromFileWithParserError(t *testing.T) {
 	config := &Config{
 		parse: func(_ io.Reader, _ map[string]string) error { return errors.New("parser error") },
 	}
 
-	actual := Configuration{}
-	err := config.FromFile(&actual, "testdata/.env")
+	err := config.FromFile(&struct{}{}, "testdata/.env")
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -37,8 +34,7 @@ func TestFromFileWithReaderError(t *testing.T) {
 		},
 	}
 
-	actual := Configuration{}
-	err := loader.FromFile(&actual, "testdata/.env")
+	err := loader.FromFile(&struct{}{}, "testdata/.env")
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -54,8 +50,7 @@ func TestFromBytesWithParserError(t *testing.T) {
 		parse: func(_ io.Reader, _ map[string]string) error { return errors.New("parser error") },
 	}
 
-	actual := Configuration{}
-	err := config.FromBytes(&actual, nil)
+	err := config.FromBytes(&struct{}{}, nil)
 
 	if err == nil {
 		t.Fatal("error expected")
@@ -75,8 +70,7 @@ func TestFromBytesWithReaderError(t *testing.T) {
 		},
 	}
 
-	actual := Configuration{}
-	err := config.FromBytes(&actual, nil)
+	err := config.FromBytes(&struct{}{}, nil)
 
 	if err == nil {
 		t.Fatal("error expected")
