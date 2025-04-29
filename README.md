@@ -1,6 +1,6 @@
 # Config
 
-[![codecov](https://codecov.io/github/andreiavrammsd/config/branch/master/graph/badge.svg?token=4BV8YNIIIX)](https://app.codecov.io/github/andreiavrammsd/config)
+[![codecov](https://codecov.io/github/andreiavrammsd/config/branch/master/graph/badge.svg?token=4BV8YNIIIX)](https://app.codecov.io/github/andreiavrammsd/config) [![GoDoc](https://godoc.org/github.com/andreiavrammsd/config?status.svg)](https://godoc.org/github.com/andreiavrammsd/config)
 
 Package `config` loads configuration values into given struct.
 
@@ -38,10 +38,6 @@ func main() {
 	fmt.Println(cfg.Tag)
 }
 ```
-
-## Documentation
-
-[![GoDoc](https://godoc.org/github.com/andreiavrammsd/config?status.svg)](https://godoc.org/github.com/andreiavrammsd/config)
 
 ## Install
 
