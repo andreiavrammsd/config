@@ -112,7 +112,6 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 
 		case p.atToken(commentToken):
 			// If inside a comment, just skip to next rune.
-			continue
 
 		case p.atToken(nameToken):
 			// Read variable name ignoring spaces (`NAME=value #comment`).
