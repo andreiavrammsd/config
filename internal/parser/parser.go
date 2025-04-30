@@ -72,6 +72,7 @@ type Parser struct {
 func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 	p.vars = vars
 	p.stream = stream{reader: bufio.NewReader(r)}
+	p.tokens = tokens{}
 	p.currentToken = nameToken
 
 	for {
