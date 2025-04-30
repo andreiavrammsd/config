@@ -1,54 +1,52 @@
 // Package `config` loads configuration values into given struct.
 //
-// - A pointer to the struct must be passed.
+// Requirements for configuration struct:
+// - A non-nil pointer to the struct must be passed.
 // - Fields must be exported. Unexported fields will be ignored.
 // - A field can have the `env` tag which defines the key of the value. If no tag provided, the key will be
 // the uppercase full path of the field (all the fields names starting root until current field, joined by underscore).
 // - The `json` tag will be used for loading from JSON.
+//
+// Input sources:
+// - environment variables
+// - environment variables from files
+// - byte array
+// - json
 package config
 
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 
 	"github.com/andreiavrammsd/config/internal/interpolator"
 	"github.com/andreiavrammsd/config/internal/parser"
 	"github.com/andreiavrammsd/config/internal/reader"
 )
 
-// Loader provides methods to load configuration values into a struct.
-type Loader[T any] struct {
-	configStruct *T
-	dotEnvFile   string
-	parse        func(r io.Reader, vars map[string]string) error
-	read         func(configStruct *T, data func(string) string) error
-	interpolate  func(map[string]string)
+var ErrInvalidConfigType = errors.New("config type must be non-nil pointer to struct")
+
+const dotEnvFile string = ".env"
+
+// Config exposes the public API.
+type Config struct {
+	parse       func(r io.Reader, vars map[string]string) error
+	interpolate func(map[string]string)
+	read        func(configStruct any, data reader.ValueReader) error
 }
 
-// Load creates a Loader with given struct.
-func Load[T any](config *T) *Loader[T] {
-	return &Loader[T]{
-		configStruct: config,
-		dotEnvFile:   ".env",
-		parse:        parser.New().Parse,
-		read:         reader.ReadToStruct[T],
-		interpolate:  interpolator.New().Interpolate,
+// FromFile loads config into struct from one or multiple dotenv files.
+// If no file given, uses .env by default.
+func (c Config) FromFile(config any, files ...string) error {
+	if err := validateConfigType(config); err != nil {
+		return err
 	}
-}
-
-// Env loads config into struct from environment variables.
-func (l *Loader[T]) Env() error {
-	return l.read(l.configStruct, os.Getenv)
-}
-
-// EnvFile loads config into struct from environment variables in one or multiple files (dotenv).
-// If no file is passed, the default is ".env".
-func (l *Loader[T]) EnvFile(files ...string) error {
 	if len(files) == 0 {
-		files = []string{l.dotEnvFile}
+		files = []string{dotEnvFile}
 	}
 
 	vars := make(map[string]string)
@@ -56,53 +54,80 @@ func (l *Loader[T]) EnvFile(files ...string) error {
 	for i := 0; i < len(files); i++ {
 		file, err := os.Open(files[i])
 		if err != nil {
-			return fmt.Errorf("config: %w", err)
+			return fmt.Errorf("%w", err)
 		}
 
-		if err = l.parse(file, vars); err != nil {
+		if err = c.parse(file, vars); err != nil {
 			file.Close()
-			return fmt.Errorf("config: %w", err)
+			return fmt.Errorf("%w", err)
 		}
 
 		file.Close()
 	}
 
-	l.interpolate(vars)
+	c.interpolate(vars)
 
-	if err := l.read(l.configStruct, func(s string) string { return vars[s] }); err != nil {
-		return fmt.Errorf("config: %w", err)
+	if err := c.read(config, func(s *string) string { return vars[*s] }); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// Bytes loads config into struct from byte array.
-func (l *Loader[T]) Bytes(input []byte) error {
-	return l.fromBytes(input)
-}
-
-// String loads config into struct from a string.
-func (l *Loader[T]) String(input string) error {
-	return l.fromBytes([]byte(input))
-}
-
-// JSON loads config into struct from json.
-func (l *Loader[T]) JSON(input json.RawMessage) error {
-	if err := json.Unmarshal(input, l.configStruct); err != nil {
-		return fmt.Errorf("config: %w", err)
+// FromEnv loads config into struct from environment variables.
+func (c Config) FromEnv(config any) error {
+	if err := validateConfigType(config); err != nil {
+		return err
 	}
 
-	return nil
+	return c.read(config, func(s *string) string { return os.Getenv(*s) })
 }
 
-func (l *Loader[T]) fromBytes(input []byte) error {
+// FromBytes loads config into struct from byte array.
+func (c Config) FromBytes(config any, input []byte) error {
+	if err := validateConfigType(config); err != nil {
+		return err
+	}
+
 	vars := make(map[string]string)
 
-	if err := l.parse(bytes.NewReader(input), vars); err != nil {
-		return fmt.Errorf("config: %w", err)
+	if err := c.parse(bytes.NewReader(input), vars); err != nil {
+		return err
 	}
 
-	l.interpolate(vars)
+	c.interpolate(vars)
 
-	return l.read(l.configStruct, func(s string) string { return vars[s] })
+	return c.read(config, func(s *string) string { return vars[*s] })
+}
+
+// FromJSON loads config into struct from json.
+func (c Config) FromJSON(config any, input json.RawMessage) error {
+	if err := validateConfigType(config); err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(input, config); err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	return nil
+}
+
+// New creates the config loader.
+func New() Config {
+	return Config{
+		parse:       parser.New().Parse,
+		interpolate: interpolator.New().Interpolate,
+		read:        reader.ReadToStruct,
+	}
+}
+
+func validateConfigType(config any) error {
+	rv := reflect.ValueOf(config)
+
+	if rv.Kind() != reflect.Pointer || rv.IsNil() || rv.Elem().Kind() != reflect.Struct {
+		return ErrInvalidConfigType
+	}
+
+	return nil
 }

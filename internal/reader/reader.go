@@ -1,7 +1,6 @@
 package reader
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -13,30 +12,21 @@ const (
 	defaultValueTag = "default"
 )
 
-type ReadValue = func(string) string
+// ValueReader is read a function that accepts a key and returns its associated value.
+type ValueReader func(*string) string
 
-var (
-	errNilPointer = errors.New("nil pointer passed")
-	errNonStruct  = errors.New("non struct passed")
-)
+// ReadToStruct takes a pointer to a struct and a ValueReader function.
+// For each property of the struct it (recursively) generates a key that represents the property.
+// Then binds a value to the property by passing the generated they to the read function.
+//
+// Panics for types different than pointer to a struct.
+func ReadToStruct(structPtr any, readValue ValueReader) error {
+	typ := reflect.TypeOf(structPtr)
 
-// ReadToStruct take a pointer to a struct and, for each property in the struct (recursively),
-// generates a key that it passes to the given readValue function which must return the value for the property.
-func ReadToStruct[T any](configStruct *T, readValue ReadValue) error {
-	if configStruct == nil {
-		return errNilPointer
-	}
-
-	typ := reflect.TypeOf(configStruct)
-
-	if typ.Elem().Kind() != reflect.Struct {
-		return errNonStruct
-	}
-
-	return parse(typ, reflect.ValueOf(configStruct), readValue, "")
+	return parse(typ, reflect.ValueOf(structPtr), readValue, "")
 }
 
-func parse(typ reflect.Type, val reflect.Value, readValue ReadValue, path string) error {
+func parse(typ reflect.Type, val reflect.Value, readValue ValueReader, path string) error {
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
@@ -74,14 +64,14 @@ func parse(typ reflect.Type, val reflect.Value, readValue ReadValue, path string
 	return nil
 }
 
-func getValue(field *reflect.StructField, readValue ReadValue, path string) (value string) {
+func getValue(field *reflect.StructField, readValue ValueReader, path string) (value string) {
 	// Generate key and read value.
 	key := generateKey(field, path)
-	value = readValue(key)
+	value = readValue(&key)
 
 	// If empty, read value from field name.
 	if value == "" {
-		value = readValue(field.Name)
+		value = readValue(&field.Name)
 	}
 
 	// If empty, get default.

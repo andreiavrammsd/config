@@ -1,13 +1,20 @@
 # Config
 
-[![codecov](https://codecov.io/github/andreiavrammsd/config/branch/master/graph/badge.svg?token=4BV8YNIIIX)](https://app.codecov.io/github/andreiavrammsd/config)
+[![codecov](https://codecov.io/github/andreiavrammsd/config/branch/master/graph/badge.svg?token=4BV8YNIIIX)](https://app.codecov.io/github/andreiavrammsd/config) [![GoDoc](https://godoc.org/github.com/andreiavrammsd/config?status.svg)](https://godoc.org/github.com/andreiavrammsd/config)
 
 Package `config` loads configuration values into given struct.
 
-- A pointer to the struct must be passed.
+Requirements for configuration struct:
+- A non-nil pointer to the struct must be passed.
 - Fields must be exported. Unexported fields will be ignored.
 - A field can have the `env` tag which defines the key of the value. If no tag provided, the key will be the uppercase full path of the field (all the fields names starting root until current field, joined by underscore).
 - The `json` tag will be used for loading from JSON.
+
+Input sources:
+- environment variables
+- environment variables from files
+- byte array
+- json
 
 ```go
 package main
@@ -28,7 +35,7 @@ func main() {
 	input := []byte(`CUSTOM_USERNAME_TAG=msd # username`)
 
 	cfg := Config{}
-	if err := config.Load(&cfg).Bytes(input); err != nil {
+	if err := config.New().FromBytes(&cfg, input); err != nil {
 		log.Fatalf("cannot load config: %s", err)
 	}
 
@@ -36,10 +43,6 @@ func main() {
 	fmt.Println(cfg.Tag)
 }
 ```
-
-## Docs
-
-[![GoDoc](https://godoc.org/github.com/andreiavrammsd/config?status.svg)](https://godoc.org/github.com/andreiavrammsd/config)
 
 ## Install
 
@@ -53,4 +56,4 @@ See [examples](./examples_test.go) and [tests](./config_test.go).
 
 ## Testing and QA tools for development
 
-See [Makefile](./Makefile).
+See [Makefile](./Makefile) and [VS Code setup](.vscode).

@@ -32,7 +32,7 @@ func TestInterpolate(t *testing.T) {
 	assertEqual(t, vars["INTERPOLATED"], "$B env_1 $ $B \\xx 6379 + $")
 }
 
-// Benchmark_Interpolate-8          2369497               495.0 ns/op            80 B/op          4 allocs/op.
+// Benchmark_Interpolate-8          1357365               922.1 ns/op           280 B/op          6 allocs/op.
 func Benchmark_Interpolate(b *testing.B) {
 	interpolator := interpolator.New()
 	vars := testdata()

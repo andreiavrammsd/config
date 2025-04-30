@@ -10,70 +10,74 @@ import (
 	"github.com/andreiavrammsd/config/internal/reader"
 )
 
-type Config struct{}
-
-func TestEnvFileWithParserErrorAtEnvFile(t *testing.T) {
-	actual := Config{}
-
-	loader := &Loader[Config]{
-		configStruct: &actual,
-		dotEnvFile:   ".env",
-		parse:        func(_ io.Reader, _ map[string]string) error { return errors.New("parser error with env file") },
-		read:         reader.ReadToStruct[Config],
+func TestFromFileWithParserError(t *testing.T) {
+	config := &Config{
+		parse: func(_ io.Reader, _ map[string]string) error { return errors.New("parser error") },
 	}
 
-	err := loader.EnvFile("testdata/.env")
+	err := config.FromFile(&struct{}{}, "testdata/.env")
 
 	if err == nil {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: parser error with env file" {
+	if err.Error() != "parser error" {
 		t.Fatal("incorrect error message:", err)
 	}
 }
 
-func TestEnvFileWithParserErrorBytes(t *testing.T) {
-	actual := Config{}
-
-	loader := &Loader[Config]{
-		configStruct: &actual,
-		dotEnvFile:   ".env",
-		parse:        func(_ io.Reader, _ map[string]string) error { return errors.New("parser error with bytes") },
-		read:         reader.ReadToStruct[Config],
-	}
-
-	err := loader.Bytes(nil)
-
-	if err == nil {
-		t.Fatal("error expected")
-	}
-
-	if err.Error() != "config: parser error with bytes" {
-		t.Fatal("incorrect error message:", err)
-	}
-}
-
-func TestEnvFileWithReaderError(t *testing.T) {
-	actual := Config{}
-
-	loader := &Loader[Config]{
-		configStruct: &actual,
-		dotEnvFile:   ".env",
-		parse:        parser.New().Parse,
-		read: func(_ *Config, _ func(string) string) error {
+func TestFromFileWithReaderError(t *testing.T) {
+	loader := &Config{
+		parse:       parser.New().Parse,
+		interpolate: interpolator.New().Interpolate,
+		read: func(_ any, _ reader.ValueReader) error {
 			return errors.New("reader error")
 		},
-		interpolate: interpolator.New().Interpolate,
 	}
 
-	err := loader.EnvFile("testdata/.env")
+	err := loader.FromFile(&struct{}{}, "testdata/.env")
 
 	if err == nil {
 		t.Fatal("error expected")
 	}
 
-	if err.Error() != "config: reader error" {
+	if err.Error() != "reader error" {
+		t.Fatal("incorrect error message:", err)
+	}
+}
+
+func TestFromBytesWithParserError(t *testing.T) {
+	config := &Config{
+		parse: func(_ io.Reader, _ map[string]string) error { return errors.New("parser error") },
+	}
+
+	err := config.FromBytes(&struct{}{}, nil)
+
+	if err == nil {
+		t.Fatal("error expected")
+	}
+
+	if err.Error() != "parser error" {
+		t.Fatal("incorrect error message:", err)
+	}
+}
+
+func TestFromBytesWithReaderError(t *testing.T) {
+	config := &Config{
+		parse:       parser.New().Parse,
+		interpolate: interpolator.New().Interpolate,
+		read: func(_ any, _ reader.ValueReader) error {
+			return errors.New("reader error")
+		},
+	}
+
+	err := config.FromBytes(&struct{}{}, nil)
+
+	if err == nil {
+		t.Fatal("error expected")
+	}
+
+	if err.Error() != "reader error" {
 		t.Fatal("incorrect error message:", err)
 	}
 }

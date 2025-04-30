@@ -17,4 +17,6 @@
         "type": "gutter"
     },
     "go.inferGopath": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
 }
