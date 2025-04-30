@@ -46,23 +46,19 @@ const (
 	commentToken
 )
 
-type token struct {
-	kind   tokenKind
-	buffer []rune
-}
-
-func (t token) String() string {
-	return string(t.buffer)
-}
+type token []rune
 
 func (t *token) append(r rune) {
-	t.buffer = append(t.buffer, r)
+	*t = append(*t, r)
+}
+
+func (t *token) reset() {
+	*t = nil
 }
 
 type tokens struct {
-	name    token
-	value   token
-	comment token
+	name  token
+	value token
 }
 
 type Parser struct {
@@ -76,11 +72,6 @@ type Parser struct {
 func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 	p.vars = vars
 	p.stream = stream{reader: bufio.NewReader(r)}
-	p.tokens = tokens{
-		name:    token{nameToken, nil},
-		value:   token{valueToken, nil},
-		comment: token{commentToken, nil},
-	}
 	p.currentToken = nameToken
 
 	for {
@@ -138,12 +129,12 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 // saveVar stores the variable name and its value,
 // and sets tokens to start scanning for a new variable.
 func (p *Parser) saveVar() {
-	if len(p.tokens.name.buffer) > 0 {
-		p.vars[p.tokens.name.String()] = cleanVarValue(p.tokens.value.buffer)
+	if len(p.tokens.name) > 0 {
+		p.vars[string(p.tokens.name)] = cleanVarValue(p.tokens.value)
 	}
 
-	p.tokens.name.buffer = nil
-	p.tokens.value.buffer = nil
+	p.tokens.name.reset()
+	p.tokens.value.reset()
 	p.setToken(nameToken)
 }
 
