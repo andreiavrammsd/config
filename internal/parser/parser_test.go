@@ -32,7 +32,7 @@ func TestParse(t *testing.T) {
 		t.Error("expected no error")
 	}
 
-	expectedNumberOfVars := 65 // IS THIS OK?
+	expectedNumberOfVars := 67 // IS THIS OK?
 	if len(vars) != expectedNumberOfVars {
 		t.Fatalf("Expected %d vars, got %d", expectedNumberOfVars, len(vars))
 	}
@@ -41,7 +41,7 @@ func TestParse(t *testing.T) {
 	assertVar(t, vars, "B", "$A")
 	assertVar(t, vars, "BB", "CC")
 	assertVar(t, vars, "VAR_WITH_COMMENT", "val with comment")
-	// FAILS: assertVar(t, vars, "D", "")
+	assertVar(t, vars, "D", "")
 	assertVar(t, vars, "D2", "")
 	assertVar(t, vars, "D3", "")
 	assertVar(t, vars, "E", "some value with spaces")
@@ -61,7 +61,8 @@ func TestParse(t *testing.T) {
 	assertVar(t, vars, "NOT_NUM", "---1")
 	assertVar(t, vars, "POS_NUM", "+1")
 	assertVar(t, vars, "POS_NOT_NUM", "++1")
-	// FAILS: assertEqual(t, vars["O"], "#notacomment")
+	// FAILS: assertVar(t, vars, "O", "#notacomment")
+	assertVar(t, vars, "O2", "")
 	assertVar(t, vars, "P", "key=value=another")
 	assertVar(t, vars, "Q", "$UNDEFINED_VAR")
 	assertVar(t, vars, "R", "$A-$B-$C")
@@ -82,8 +83,12 @@ func TestParse(t *testing.T) {
 		"BIG",
 		"Lorem_ipsum_dolor_sit_amet_consectetur_adipiscing_elit_sed_do_eiusmod_tempor_incididunt_ut_labore_et_dolore_magna_aliqua",
 	)
-	// FAILS: assertEqual(t, vars["Y"], "this is \na weird \nmultiline\nvalue")
-	// FAILS: assertEqual(t, vars["LONG"], "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	assertVar(
+		t,
+		vars,
+		"LONG",
+		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+	)
 	assertVar(t, vars, "Z1", "12345")
 	assertVar(t, vars, "Z2", "0")
 	assertVar(t, vars, "Z3", "-999")
@@ -96,14 +101,15 @@ func TestParse(t *testing.T) {
 	assertVar(t, vars, "EE", "[this looks like json]")
 	assertVar(t, vars, "EE2", "[this looks like json]")
 	assertVar(t, vars, "EE3", "[this looks like json]")
-	// IS THIS OK? assertEqual(t, vars["EE4"], "[this looks like json]")
-	// IS THIS OK? assertEqual(t, vars["EE5"], "[this looks like json]")
-	// FAILS: assertEqual(t, vars["FF"], "{ \"name\": \"John\", \"age\": 30 }")
+	// IS THIS OK? assertVar(t, vars, "EE4", "[this looks like json]")
+	// IS THIS OK? assertVar(t, vars, "EE5", "[this looks like json]")
+	// FAILS: assertVar(t, vars, "FF", "{ \"name\": \"John\", \"age\": 30 }")
 	assertVar(t, vars, "ARRAY", "one,two,three")
 	assertVar(t, vars, "EMPTY1", "")
 	assertVar(t, vars, "EMPTY2", "")
 	assertVar(t, vars, "NUM_STRING", "12345")
-	// FAILS: assertEqual(t, vars["BROKEN_NEWLINE"], "this is\nstill valid because quotes stay open")
+	// FAILS: assertVar(t, vars, "BROKEN_NEWLINE", "this is\nstill valid because quotes stay open")
+	// FAILS: assertVar(t, vars, "BROKEN_NEWLINE_SINGLE_QUOTES", "this is\nstill valid because quotes stay open")
 	assertVar(t, vars, "XX", "second")
 	assertVar(t, vars, "INTERPOLATED", "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $")
 }
