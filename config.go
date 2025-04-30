@@ -28,11 +28,7 @@ import (
 	"github.com/andreiavrammsd/config/internal/reader"
 )
 
-var (
-	ErrNilPointerInput = errors.New("nil pointer passed")
-	ErrValueInput      = errors.New("value passed instead of pointer")
-	ErrNonStructInput  = errors.New("non struct passed")
-)
+var ErrInvalidConfigType = errors.New("config type must be non-nil pointer to struct")
 
 const dotEnvFile string = ".env"
 
@@ -127,18 +123,10 @@ func New() Config {
 }
 
 func validateConfigType(config any) error {
-	if config == nil {
-		return ErrNilPointerInput
-	}
+	rv := reflect.ValueOf(config)
 
-	typ := reflect.TypeOf(config)
-
-	if typ.Kind() != reflect.Ptr {
-		return ErrValueInput
-	}
-
-	if typ.Elem().Kind() != reflect.Struct {
-		return ErrNonStructInput
+	if rv.Kind() != reflect.Pointer || rv.IsNil() || rv.Elem().Kind() != reflect.Struct {
+		return ErrInvalidConfigType
 	}
 
 	return nil

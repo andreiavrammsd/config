@@ -136,7 +136,7 @@ func TestFromJSONWithInvalidInput(t *testing.T) {
 	}
 
 	if err.Error() != "invalid character 'i' looking for beginning of value" {
-		t.Fatal("incorrect error message:", err)
+		t.Fatal("incorrect error:", err)
 	}
 }
 
@@ -147,8 +147,8 @@ func TestWithNilConfigType(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err != config.ErrNilPointerInput {
-		t.Fatal("incorrect error message:", err)
+	if err != config.ErrInvalidConfigType {
+		t.Fatal("incorrect error:", err)
 	}
 }
 
@@ -159,8 +159,8 @@ func TestWithValueConfigType(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err != config.ErrValueInput {
-		t.Fatal("incorrect error message:", err)
+	if err != config.ErrInvalidConfigType {
+		t.Fatal("incorrect error:", err)
 	}
 }
 
@@ -172,8 +172,8 @@ func TestWithNonStructConfigType(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err != config.ErrNonStructInput {
-		t.Fatal("incorrect error message:", err)
+	if err != config.ErrInvalidConfigType {
+		t.Fatal("incorrect error:", err)
 	}
 }
 
@@ -185,7 +185,7 @@ func TestFromJSONWithInvalidConfigType(t *testing.T) {
 		t.Fatal("error expected")
 	}
 
-	if err != config.ErrNonStructInput {
-		t.Fatal("incorrect error message:", err)
+	if err != config.ErrInvalidConfigType {
+		t.Fatal("incorrect error:", err)
 	}
 }
