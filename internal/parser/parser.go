@@ -89,6 +89,13 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 		case err != nil:
 			return err
 
+		case p.stream.isAtEqualSign():
+			// If equal sign detected, start reading variable value (`name=VALUE #comment`).
+			if p.atToken(valueToken) {
+				p.tokens.value.append(p.stream.current)
+			}
+			p.setToken(valueToken)
+
 		case p.stream.isAtCommentBegin():
 			// Comment begins (`name=value #COMMENT`), save last variable.
 			if p.atToken(valueToken) {
@@ -106,13 +113,6 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 		case p.atToken(commentToken):
 			// If inside a comment, just skip to next rune.
 			continue
-
-		case p.stream.isAtEqualSign():
-			// If equal sign detected, start reading variable value (`name=VALUE #comment`).
-			if p.atToken(valueToken) {
-				p.tokens.value.append(p.stream.current)
-			}
-			p.setToken(valueToken)
 
 		case p.atToken(nameToken):
 			// Read variable name ignoring spaces (`NAME=value #comment`).
