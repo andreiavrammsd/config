@@ -32,7 +32,7 @@ func TestParse(t *testing.T) {
 		t.Error("expected no error")
 	}
 
-	expectedNumberOfVars := 66 // IS THIS OK?
+	expectedNumberOfVars := 67 // IS THIS OK?
 	if len(vars) != expectedNumberOfVars {
 		t.Fatalf("Expected %d vars, got %d", expectedNumberOfVars, len(vars))
 	}
@@ -62,6 +62,7 @@ func TestParse(t *testing.T) {
 	assertVar(t, vars, "POS_NUM", "+1")
 	assertVar(t, vars, "POS_NOT_NUM", "++1")
 	// FAILS: assertVar(t, vars, "O", "#notacomment")
+	assertVar(t, vars, "O2", "")
 	assertVar(t, vars, "P", "key=value=another")
 	assertVar(t, vars, "Q", "$UNDEFINED_VAR")
 	assertVar(t, vars, "R", "$A-$B-$C")
@@ -83,7 +84,8 @@ func TestParse(t *testing.T) {
 		"Lorem_ipsum_dolor_sit_amet_consectetur_adipiscing_elit_sed_do_eiusmod_tempor_incididunt_ut_labore_et_dolore_magna_aliqua",
 	)
 	// assertVar(t, vars, "Y", "this is \na weird \nmultiline\nvalue")
-	// FAILS: assertVar(t, vars, "LONG", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	// FAILS:
+	// assertVar(t, vars, "LONG", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 	assertVar(t, vars, "Z1", "12345")
 	assertVar(t, vars, "Z2", "0")
 	assertVar(t, vars, "Z3", "-999")
