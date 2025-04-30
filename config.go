@@ -36,7 +36,7 @@ const dotEnvFile string = ".env"
 type Config struct {
 	parse       func(r io.Reader, vars map[string]string) error
 	interpolate func(map[string]string)
-	read        func(configStruct any, data func(*string) string) error
+	read        func(configStruct any, data reader.ValueReader) error
 }
 
 // FromFile loads config into struct from one or multiple dotenv files.

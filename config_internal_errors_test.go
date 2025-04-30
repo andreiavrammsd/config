@@ -7,6 +7,7 @@ import (
 
 	"github.com/andreiavrammsd/config/internal/interpolator"
 	"github.com/andreiavrammsd/config/internal/parser"
+	"github.com/andreiavrammsd/config/internal/reader"
 )
 
 func TestFromFileWithParserError(t *testing.T) {
@@ -29,7 +30,7 @@ func TestFromFileWithReaderError(t *testing.T) {
 	loader := &Config{
 		parse:       parser.New().Parse,
 		interpolate: interpolator.New().Interpolate,
-		read: func(_ any, _ func(*string) string) error {
+		read: func(_ any, _ reader.ValueReader) error {
 			return errors.New("reader error")
 		},
 	}
@@ -65,7 +66,7 @@ func TestFromBytesWithReaderError(t *testing.T) {
 	config := &Config{
 		parse:       parser.New().Parse,
 		interpolate: interpolator.New().Interpolate,
-		read: func(_ any, _ func(*string) string) error {
+		read: func(_ any, _ reader.ValueReader) error {
 			return errors.New("reader error")
 		},
 	}
