@@ -83,9 +83,12 @@ func TestParse(t *testing.T) {
 		"BIG",
 		"Lorem_ipsum_dolor_sit_amet_consectetur_adipiscing_elit_sed_do_eiusmod_tempor_incididunt_ut_labore_et_dolore_magna_aliqua",
 	)
-	// assertVar(t, vars, "Y", "this is \na weird \nmultiline\nvalue")
-	// FAILS:
-	// assertVar(t, vars, "LONG", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	assertVar(
+		t,
+		vars,
+		"LONG",
+		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+	)
 	assertVar(t, vars, "Z1", "12345")
 	assertVar(t, vars, "Z2", "0")
 	assertVar(t, vars, "Z3", "-999")
@@ -106,6 +109,7 @@ func TestParse(t *testing.T) {
 	assertVar(t, vars, "EMPTY2", "")
 	assertVar(t, vars, "NUM_STRING", "12345")
 	// FAILS: assertVar(t, vars, "BROKEN_NEWLINE", "this is\nstill valid because quotes stay open")
+	// FAILS: assertVar(t, vars, "BROKEN_NEWLINE_SINGLE_QUOTES", "this is\nstill valid because quotes stay open")
 	assertVar(t, vars, "XX", "second")
 	assertVar(t, vars, "INTERPOLATED", "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $")
 }

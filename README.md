@@ -57,3 +57,14 @@ See [examples](./examples_test.go) and [tests](./config_test.go).
 ## Testing and QA tools for development
 
 See [Makefile](./Makefile) and [VS Code setup](.vscode).
+
+## Known issues
+
+- In some cases, quoted values are not parsed correctly.
+```
+MULTILINE_QUOTED="this is a multiline
+quoted
+value"
+
+QUOTED_INCLUDING_QUOTES="{ \"name\": \"John\", \"age\": 30 }"
+```
