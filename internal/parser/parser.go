@@ -89,11 +89,10 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 		case err != nil:
 			return err
 
-		case p.stream.isAtEqualSign():
-			// If equal sign detected, start reading variable value (`name=VALUE #comment`).
-			if p.atToken(valueToken) {
-				p.tokens.value.append(p.stream.current)
-			}
+		case p.stream.isAtEqualSign() && !p.atToken(valueToken):
+			// If equal sign detected and not already scanning variable value
+			// (equal sign detected first time on line),
+			// the variable value starts (`name=VALUE #comment`).
 			p.setToken(valueToken)
 
 		case p.stream.isAtCommentBegin():
