@@ -1,11 +1,11 @@
-// Package `config` loads configuration values into given struct.
+// Package `config` parses configuration values into given struct.
 //
 // Requirements for configuration struct:
 // - A non-nil pointer to the struct must be passed.
 // - Fields must be exported. Unexported fields will be ignored.
 // - A field can have the `env` tag which defines the key of the value. If no tag provided, the key will be
 // the uppercase full path of the field (all the fields names starting root until current field, joined by underscore).
-// - The `json` tag will be used for loading from JSON.
+// - The `json` tag will be used for parsing from JSON.
 //
 // Input sources:
 // - environment variables
@@ -39,7 +39,7 @@ type Config struct {
 	read        func(configStruct any, data reader.ValueReader) error
 }
 
-// FromFile loads config into struct from one or multiple dotenv files.
+// FromFile parses config into struct from one or multiple dotenv files.
 // If no file given, uses .env by default.
 func (c Config) FromFile(config any, files ...string) error {
 	if err := validateConfigType(config); err != nil {
@@ -74,7 +74,7 @@ func (c Config) FromFile(config any, files ...string) error {
 	return nil
 }
 
-// FromEnv loads config into struct from environment variables.
+// FromEnv parses config into struct from environment variables.
 func (c Config) FromEnv(config any) error {
 	if err := validateConfigType(config); err != nil {
 		return err
@@ -83,7 +83,7 @@ func (c Config) FromEnv(config any) error {
 	return c.read(config, func(s *string) string { return os.Getenv(*s) })
 }
 
-// FromBytes loads config into struct from byte array.
+// FromBytes parses config into struct from byte array.
 func (c Config) FromBytes(config any, input []byte) error {
 	if err := validateConfigType(config); err != nil {
 		return err
@@ -100,7 +100,7 @@ func (c Config) FromBytes(config any, input []byte) error {
 	return c.read(config, func(s *string) string { return vars[*s] })
 }
 
-// FromJSON loads config into struct from json.
+// FromJSON parses config into struct from json.
 func (c Config) FromJSON(config any, input json.RawMessage) error {
 	if err := validateConfigType(config); err != nil {
 		return err
@@ -113,7 +113,7 @@ func (c Config) FromJSON(config any, input json.RawMessage) error {
 	return nil
 }
 
-// New creates the config loader.
+// New creates the config package instance.
 func New() Config {
 	return Config{
 		parse:       parser.New().Parse,

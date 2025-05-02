@@ -2,13 +2,13 @@
 
 [![codecov](https://codecov.io/github/andreiavrammsd/config/branch/master/graph/badge.svg?token=4BV8YNIIIX)](https://app.codecov.io/github/andreiavrammsd/config) [![GoDoc](https://godoc.org/github.com/andreiavrammsd/config?status.svg)](https://godoc.org/github.com/andreiavrammsd/config)
 
-Package `config` loads configuration values into given struct.
+Package `config` parses configuration values into given struct.
 
 Requirements for configuration struct:
 - A non-nil pointer to the struct must be passed.
 - Fields must be exported. Unexported fields will be ignored.
 - A field can have the `env` tag which defines the key of the value. If no tag provided, the key will be the uppercase full path of the field (all the fields names starting root until current field, joined by underscore).
-- The `json` tag will be used for loading from JSON.
+- The `json` tag will be used for parsing from JSON.
 
 Input sources:
 - environment variables
@@ -36,7 +36,7 @@ func main() {
 
 	cfg := Config{}
 	if err := config.New().FromBytes(&cfg, input); err != nil {
-		log.Fatalf("cannot load config: %s", err)
+		log.Fatalf("cannot parse config: %s", err)
 	}
 
 	fmt.Println(cfg.Username)
