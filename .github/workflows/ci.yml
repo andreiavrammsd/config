@@ -52,6 +52,11 @@ jobs:
 
   fuzz:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - internal/parser
+          - internal/interpolator
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -59,8 +64,7 @@ jobs:
           go-version: 1.x
       - run: |
           FUZZTIME="${{ inputs.fuzztime || '30s' }}"
-          go test ./internal/parser/... -v -fuzz=Fuzz -fuzztime $FUZZTIME
-          go test ./internal/interpolator/... -v -fuzz=Fuzz -fuzztime $FUZZTIME
+          go test ./${{ matrix.target }} -v -fuzz=Fuzz -fuzztime $FUZZTIME
 
   benchmark:
     runs-on: ubuntu-latest
