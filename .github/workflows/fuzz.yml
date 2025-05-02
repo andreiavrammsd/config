@@ -1,0 +1,27 @@
+name: Fuzz
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    name: Go 1.x
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: 1.x
+
+    - name: Quick fuzz
+      run: |
+        go test ./internal/parser/... -v -fuzz=Fuzz -fuzztime 30s
+        go test ./internal/interpolator/... -v -fuzz=Fuzz -fuzztime 30s
