@@ -10,32 +10,14 @@ on:
 jobs:
 
   build:
-    name: ${{ matrix.config.name }}
+    name: Go min supported
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - {
-            name: "Go 1.18.x",
-            version: "1.18.x",
-          }
-          - {
-            name: "Go 1.x",
-            version: "1.x",
-          }
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
+    - uses: actions/setup-go@v5
       with:
-        go-version: ${{ matrix.config.version }}
-
-    - name: Test
-      run: make test
-
-    - name: Benchmark
-      run: make bench
+        go-version-file: go.mod
+        cache: false
+    - run: go test ./...
+    - run: go test -bench=. -benchmem -run=Bench ./...
