@@ -49,6 +49,7 @@ linters:
     - wrapcheck
     - err113
     - funlen
+    - predeclared
   settings:
     dupl:
       threshold: 100
@@ -68,8 +69,6 @@ linters:
       simple: true
       range-loops: true
       for-loops: false
-    govet:
-      check-shadowing: true
     errcheck:
       check-type-assertions: true
       check-blank: true

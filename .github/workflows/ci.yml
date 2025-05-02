@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      fuzztime:
+        description: "How long to run fuzzing (e.g. 30s, 2m)"
+        required: false
+        default: "30s"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.1.5
+  
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.18, stable]
+    name: test (Go ${{ matrix.go-version }})
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+      - run: go test -v ./...
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: stable
+    - run: go test -coverprofile=coverage.txt -covermode=atomic ./...
+    - uses: codecov/codecov-action@v5
+      with:
+        files: coverage.txt
+        token: ${{secrets.CODECOV_TOKEN}}
+
+  fuzz:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - internal/parser
+          - internal/interpolator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.x
+      - run: |
+          FUZZTIME="${{ inputs.fuzztime || '30s' }}"
+          go test ./${{ matrix.target }} -v -fuzz=Fuzz -fuzztime $FUZZTIME
+
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - run: go test -bench=. -benchmem -run=Bench ./...
