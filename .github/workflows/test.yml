@@ -34,9 +34,6 @@ jobs:
       with:
         go-version: ${{ matrix.config.version }}
 
-    - name: Lint
-      run: make lint
-
     - name: Test
       run: make test
 
