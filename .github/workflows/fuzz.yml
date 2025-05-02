@@ -6,6 +6,11 @@ on:
       - master
   pull_request:
   workflow_dispatch:
+    inputs:
+      fuzztime:
+        description: "How long to run fuzzing (e.g. 30s, 2m)"
+        required: false
+        default: "30s"
 
 jobs:
 
@@ -21,5 +26,6 @@ jobs:
 
     - name: Quick fuzz
       run: |
-        go test ./internal/parser/... -v -fuzz=Fuzz -fuzztime 30s
-        go test ./internal/interpolator/... -v -fuzz=Fuzz -fuzztime 30s
+        FUZZTIME="${{ inputs.fuzztime || '30s' }}"
+        go test ./internal/parser/... -v -fuzz=Fuzz -fuzztime $FUZZTIME
+        go test ./internal/interpolator/... -v -fuzz=Fuzz -fuzztime $FUZZTIME
