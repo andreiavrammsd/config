@@ -27,7 +27,7 @@ func TestFromFileWithParserError(t *testing.T) {
 }
 
 func TestFromFileWithReaderError(t *testing.T) {
-	loader := &Config{
+	config := &Config{
 		parse:       parser.New().Parse,
 		interpolate: interpolator.New().Interpolate,
 		read: func(_ any, _ reader.ValueReader) error {
@@ -35,7 +35,7 @@ func TestFromFileWithReaderError(t *testing.T) {
 		},
 	}
 
-	err := loader.FromFile(&struct{}{}, "testdata/.env")
+	err := config.FromFile(&struct{}{}, "testdata/.env")
 
 	if err == nil {
 		t.Fatal("error expected")
