@@ -1,6 +1,5 @@
 .PHONY: all test bench lint coverage precommithook
 
-COVER_PROFILE=coverage.txt
 GOLANGCI_LINT_VERSION=2.1.5
 
 all: test lint
@@ -15,10 +14,8 @@ lint: check-lint
 	@golangci-lint run || (golangci-lint fmt && exit 1)
 
 coverage:
-	go test -v -coverprofile=$(COVER_PROFILE) -covermode=atomic ./...
-
-coverage-report: coverage
-	go tool cover -html=$(COVER_PROFILE)
+	go test -coverprofile=coverage.txt -covermode=atomic ./...
+	go tool cover -html=coverage.txt
 
 precommithook:
 	echo '#!/bin/sh\n\nmake' > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
