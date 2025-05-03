@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"strings"
 )
@@ -29,11 +30,12 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 		err := p.stream.advance()
 
 		switch {
-		case err == io.EOF:
+		case errors.Is(err, io.EOF):
 			// Parsing done, save last variable.
 			if p.atToken(valueToken) {
 				p.saveVar()
 			}
+
 			return nil
 
 		case err != nil:
@@ -50,6 +52,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			if p.atToken(valueToken) {
 				p.saveVar()
 			}
+
 			p.setToken(commentToken)
 
 		case p.stream.isAtLineEnd():
@@ -57,6 +60,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			if p.atToken(valueToken) {
 				p.saveVar()
 			}
+
 			p.setToken(nameToken)
 
 		case p.atToken(commentToken):

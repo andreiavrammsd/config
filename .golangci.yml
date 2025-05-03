@@ -4,53 +4,17 @@ run:
   issues-exit-code: 20
   tests: true
 linters:
-  enable:
-    - dupl
-    - gochecknoglobals
-    - gochecknoinits
-    - goconst
-    - gocritic
-    - gocyclo
-    - gosec
-    - lll
-    - misspell
-    - nakedret
-    - prealloc
-    - unconvert
-    - unparam
-    - govet
-    - staticcheck
-    - unused
-    - ineffassign
-    - errcheck
-    - godot
-    - revive
-    - unconvert
-    - usestdlibvars
-    - testableexamples
-    - reassign
-    - prealloc
-    - nilnil
-    - nilnesserr
-    - nestif
-    - makezero
-    - lll
-    - ireturn
-    - importas
-    - godox
-    - gocyclo
-    - gocritic
-    - gochecknoglobals
-    - funcorder
-    - forcetypeassert
-    - decorder
-    - bidichk
-    - asasalint
-    - wrapcheck
-    - err113
-    - funlen
-    - predeclared
+  default: all
+  disable:
+    - depguard
+    - paralleltest
+    - exhaustruct
+    - nonamedreturns
+    - nlreturn
+    - tagalign
   settings:
+    cyclop:
+      max-complexity: 15
     dupl:
       threshold: 100
     goconst:
@@ -72,6 +36,13 @@ linters:
     errcheck:
       check-type-assertions: true
       check-blank: true
+    exhaustive:
+      default-signifies-exhaustive: true
+    wsl:
+      allow-trailing-comment: true
+    varnamelen:
+      ignore-decls:
+        - i int
   exclusions:
     generated: lax
     presets:
@@ -89,6 +60,8 @@ linters:
           - err113
           - funlen
           - lll
+          - wsl
+          - errorlint
 formatters:
   enable:
     - gofmt
@@ -101,7 +74,3 @@ formatters:
       max-len: 120
   exclusions:
     generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$

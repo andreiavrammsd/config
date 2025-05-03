@@ -14,10 +14,10 @@ const testdataFile string = "testdata/.env"
 
 func TestFromFileWithDefaultFile(t *testing.T) {
 	// Temporarily switch to testdata directory to read .env by default
-	cwd, _ := os.Getwd() // nolint:errcheck
-	os.Chdir("testdata") // nolint:errcheck
+	cwd, _ := os.Getwd() //nolint:errcheck
+	os.Chdir("testdata") //nolint:errcheck
 	defer func() {
-		os.Chdir(cwd) // nolint:errcheck
+		os.Chdir(cwd) //nolint:errcheck
 	}()
 
 	expected := testdata.GetExpectedOutput()

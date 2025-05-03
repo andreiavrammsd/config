@@ -45,13 +45,14 @@ func (c Config) FromFile(config any, files ...string) error {
 	if err := validateConfigType(config); err != nil {
 		return err
 	}
+
 	if len(files) == 0 {
 		files = []string{dotEnvFile}
 	}
 
 	vars := make(map[string]string)
 
-	for i := 0; i < len(files); i++ {
+	for i := range files {
 		file, err := os.Open(files[i])
 		if err != nil {
 			return fmt.Errorf("%w", err)

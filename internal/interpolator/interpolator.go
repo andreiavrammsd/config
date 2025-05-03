@@ -16,7 +16,7 @@ func (ip *value) atEnd() bool {
 
 // nextVarIsDoubleEscaped detects: `\\$“.
 func (ip *value) nextVarIsDoubleEscaped() bool {
-	return isEscape(ip.current()) && isEscape(ip.peek(1)) && isDolar(ip.peek(2))
+	return isEscape(ip.current()) && isEscape(ip.peek(1)) && isDolar(ip.peek(2)) //nolint: mnd
 }
 
 // nextVarIsEscaped detects: `\$“.
@@ -125,6 +125,7 @@ func (ip *Interpolator) parseVars() {
 
 			// Append literal.
 			ip.appendCurrentCharacterToNewValue()
+
 			continue
 		}
 
@@ -134,6 +135,7 @@ func (ip *Interpolator) parseVars() {
 			ip.appendCurrentCharacterToNewValue()
 			ip.interpolatedVar.name = nil
 			atVar = false
+
 			continue
 		}
 
