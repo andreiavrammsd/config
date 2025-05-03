@@ -35,7 +35,7 @@ type config struct {
 	}
 }
 
-func readValue(s *string) string {
+func readValue(str *string) string {
 	vars := make(map[string]string)
 	vars["MyString"] = "string"
 	vars["SDefault"] = ""
@@ -61,10 +61,12 @@ func readValue(s *string) string {
 
 	vars["STRUCT_INTEGER"] = "123"
 
-	return vars[*s]
+	return vars[*str]
 }
 
 func assertEqual[T comparable](t *testing.T, actual, expected T) {
+	t.Helper()
+
 	if actual != expected {
 		t.Fatalf("%v != %v", actual, expected)
 	}

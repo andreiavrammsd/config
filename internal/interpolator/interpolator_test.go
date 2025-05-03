@@ -7,6 +7,8 @@ import (
 )
 
 func assertEqual(t *testing.T, actual, expected string) {
+	t.Helper()
+
 	if actual != expected {
 		t.Fatalf("%s != %s", actual, expected)
 	}
@@ -40,7 +42,7 @@ func Benchmark_Interpolate(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		interpolator.Interpolate(vars)
 	}
 }
@@ -51,18 +53,18 @@ func FuzzInterpolate(f *testing.F) {
 		f.Add(v)
 	}
 
-	ip := interpolator.New()
+	fuzzInterpolator := interpolator.New()
 
 	f.Fuzz(func(t *testing.T, input string) {
 		varsFirst := map[string]string{
 			input: input,
 		}
-		ip.Interpolate(varsFirst)
+		fuzzInterpolator.Interpolate(varsFirst)
 
 		varsSecond := map[string]string{
 			input: input,
 		}
-		ip.Interpolate(varsSecond)
+		fuzzInterpolator.Interpolate(varsSecond)
 
 		for key, firstValue := range varsFirst {
 			secondValue := varsSecond[key]
@@ -70,7 +72,6 @@ func FuzzInterpolate(f *testing.F) {
 			if firstValue != secondValue {
 				t.Errorf("Before: %q, after: %q", firstValue, secondValue)
 			}
-
 		}
 	})
 }

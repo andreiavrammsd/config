@@ -3,9 +3,10 @@ GOLANGCI_LINT_VERSION=2.1.5
 all: test lint
 
 test:
-	go test ./...
+	go test -run=Test ./...
 
 lint: install-lint
+	@golangci-lint config verify
 	@golangci-lint run || (golangci-lint fmt && exit 1)
 
 coverage:

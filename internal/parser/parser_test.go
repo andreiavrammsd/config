@@ -14,6 +14,8 @@ import (
 )
 
 func assertVar(t *testing.T, vars map[string]string, key, expectedValue string) {
+	t.Helper()
+
 	_, file, line, _ := runtime.Caller(1)
 
 	if value, ok := vars[key]; !ok {
@@ -119,12 +121,12 @@ type eofReader struct {
 	atChar  int
 }
 
-func (e *eofReader) Read(p []byte) (n int, err error) {
+func (e *eofReader) Read(p []byte) (int, error) {
 	if e.atChar >= len(e.content) {
 		return 0, io.EOF
 	}
 
-	n = copy(p, e.content)
+	n := copy(p, e.content)
 	e.atChar += n
 
 	return n, nil
@@ -166,15 +168,15 @@ func TestParseWithReaderError(t *testing.T) {
 
 // Benchmark_Parse-8        1623301               709.7 ns/op          4192 B/op          2 allocs/op.
 func Benchmark_Parse(b *testing.B) {
-	p := parser.New()
+	benchParser := parser.New()
 	reader := bytes.NewReader(testdata("testdata/.env"))
 	vars := make(map[string]string)
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
-		err := p.Parse(reader, vars)
+	for range b.N {
+		err := benchParser.Parse(reader, vars)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -187,16 +189,16 @@ func FuzzParse(f *testing.F) {
 		f.Add(tc)
 	}
 
-	p := parser.New()
+	fuzzParser := parser.New()
 
 	f.Fuzz(func(t *testing.T, input string) {
 		varsFirst := make(map[string]string)
-		if err := p.Parse(bytes.NewReader([]byte(input)), varsFirst); err != nil {
+		if err := fuzzParser.Parse(bytes.NewReader([]byte(input)), varsFirst); err != nil {
 			t.Error(err)
 		}
 
 		varsSecond := make(map[string]string)
-		if err := p.Parse(bytes.NewReader([]byte(input)), varsSecond); err != nil {
+		if err := fuzzParser.Parse(bytes.NewReader([]byte(input)), varsSecond); err != nil {
 			t.Error(err)
 		}
 
