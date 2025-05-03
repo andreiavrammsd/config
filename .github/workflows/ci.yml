@@ -31,8 +31,9 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
       - run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
           go test -vet=all -v -run=Test ./...
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
 
   coverage:
     runs-on: ubuntu-latest
