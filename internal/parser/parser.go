@@ -4,57 +4,7 @@ import (
 	"bufio"
 	"io"
 	"strings"
-	"unicode"
 )
-
-type stream struct {
-	reader  *bufio.Reader
-	current rune
-}
-
-func (s *stream) advance() (err error) {
-	s.current, _, err = s.reader.ReadRune()
-	return
-}
-
-func (s *stream) isAtCommentBegin() bool {
-	return s.current == '#'
-}
-
-func (s *stream) isAtLineEnd() bool {
-	return s.current == '\n' || s.current == '\r'
-}
-
-func (s *stream) isAtEqualSign() bool {
-	return s.current == '='
-}
-
-func (s *stream) isAtSpace() bool {
-	return unicode.IsSpace(s.current)
-}
-
-type tokenKind byte
-
-const (
-	// Parser is in the variable name scope: `NAME=value #comment`.
-	nameToken tokenKind = iota
-
-	// Parser is in the variable value scope: `name=VALUE #comment`.
-	valueToken
-
-	// Parser is in the comment scope: `name=value # COMMENT`.
-	commentToken
-)
-
-type token []rune
-
-func (t *token) append(r rune) {
-	*t = append(*t, r)
-}
-
-func (t *token) reset() {
-	*t = nil
-}
 
 type tokens struct {
 	name  token

@@ -1,6 +1,6 @@
 # Config
 
-[![codecov](https://codecov.io/github/andreiavrammsd/config/branch/master/graph/badge.svg?token=4BV8YNIIIX)](https://app.codecov.io/github/andreiavrammsd/config) [![GoDoc](https://godoc.org/github.com/andreiavrammsd/config?status.svg)](https://godoc.org/github.com/andreiavrammsd/config)
+[![build](https://github.com/andreiavrammsd/config/workflows/CI/badge.svg)](https://github.com/andreiavrammsd/config/actions/workflows/ci.yml) [![codecov](https://codecov.io/github/andreiavrammsd/config/branch/master/graph/badge.svg?token=4BV8YNIIIX)](https://app.codecov.io/github/andreiavrammsd/config) [![GoDoc](https://godoc.org/github.com/andreiavrammsd/config?status.svg)](https://godoc.org/github.com/andreiavrammsd/config)
 
 Package `config` parses configuration values into given struct.
 
