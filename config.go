@@ -1,4 +1,4 @@
-// Package `config` parses configuration values into given struct.
+// Package config parses configuration values into a given struct.
 //
 // Requirements for configuration struct:
 // - A non-nil pointer to the struct must be passed.

@@ -112,6 +112,7 @@ func TestReadToStructWithIntParseError(t *testing.T) {
 	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid int value"
+
 		return vars[*s]
 	}
 
@@ -132,6 +133,7 @@ func TestReadToStructWithUintParseError(t *testing.T) {
 	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid uint value"
+
 		return vars[*s]
 	}
 
@@ -152,6 +154,7 @@ func TestReadToStructWithFloat32ParseError(t *testing.T) {
 	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid float32 value"
+
 		return vars[*s]
 	}
 
@@ -172,6 +175,7 @@ func TestReadToStructWithFloat64ParseError(t *testing.T) {
 	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid float64 value"
+
 		return vars[*s]
 	}
 
@@ -192,6 +196,7 @@ func TestReadToStructWithBoolParseError(t *testing.T) {
 	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["VALUE"] = "invalid bool value"
+
 		return vars[*s]
 	}
 
@@ -216,6 +221,7 @@ func TestReadToStructWithInnerStructParseError(t *testing.T) {
 	readValue := func(s *string) string {
 		vars := make(map[string]string)
 		vars["STRUCT_INTEGER"] = "invalid struct integer value"
+
 		return vars[*s]
 	}
 
