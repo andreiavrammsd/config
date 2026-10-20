@@ -9,9 +9,13 @@ linters:
     - depguard
     - paralleltest
     - exhaustruct
+    - exhaustruct_v5
+    - noinlineerr
     - nonamedreturns
     - nlreturn
     - tagalign
+    - wsl
+    - gomodguard
   settings:
     cyclop:
       max-complexity: 15
@@ -38,8 +42,10 @@ linters:
       check-blank: true
     exhaustive:
       default-signifies-exhaustive: true
-    wsl:
-      allow-trailing-comment: true
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 2
     varnamelen:
       ignore-decls:
         - i int
@@ -60,7 +66,7 @@ linters:
           - err113
           - funlen
           - lll
-          - wsl
+          - wsl_v5
           - errorlint
 formatters:
   enable:

@@ -16,6 +16,7 @@ func TestFromFileWithDefaultFile(t *testing.T) {
 	// Temporarily switch to testdata directory to read .env by default
 	cwd, _ := os.Getwd() //nolint:errcheck
 	os.Chdir("testdata") //nolint:errcheck
+
 	defer func() {
 		os.Chdir(cwd) //nolint:errcheck
 	}()

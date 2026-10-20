@@ -27,14 +27,14 @@ func ReadToStruct(structPtr any, readValue ValueReader) error {
 }
 
 func parse(typ reflect.Type, val reflect.Value, readValue ValueReader, path string) error {
-	if typ.Kind() == reflect.Ptr {
+	if typ.Kind() == reflect.Pointer {
 		typ = typ.Elem()
 	}
 
 	for i := range typ.NumField() {
 		field := typ.Field(i)
 
-		if val.Kind() == reflect.Ptr {
+		if val.Kind() == reflect.Pointer {
 			val = val.Elem()
 		}
 
@@ -144,7 +144,7 @@ func setFieldValue(field *reflect.StructField, fieldValue reflect.Value, value s
 		fieldValue.SetBytes([]byte(value))
 	default:
 		// Nothing to do.
-	}
+	} //nolint:wsl
 
 	return nil
 }

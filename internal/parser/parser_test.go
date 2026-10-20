@@ -135,7 +135,7 @@ func (e *eofReader) Read(p []byte) (int, error) {
 func TestParseWithEOF(t *testing.T) {
 	vars := make(map[string]string)
 	err := parser.New().Parse(&eofReader{"a=b", 0}, vars)
-	if err != nil {
+	if err != nil { //nolint:wsl
 		t.Error("expected no error")
 	}
 
@@ -212,12 +212,15 @@ func FuzzParse(f *testing.F) {
 			if firstValue != secondValue {
 				t.Errorf("Before: %q, after: %q", firstValue, secondValue)
 			}
+
 			if !utf8.ValidString(key) {
 				t.Errorf("Parse produced invalid UTF-8 string for key: %q", key)
 			}
+
 			if !utf8.ValidString(firstValue) {
 				t.Errorf("Parse produced invalid UTF-8 string for value in first map: %q", firstValue)
 			}
+
 			if !utf8.ValidString(secondValue) {
 				t.Errorf("Parse produced invalid UTF-8 string for value in second map %q", secondValue)
 			}

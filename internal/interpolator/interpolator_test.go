@@ -93,5 +93,6 @@ func testdata() map[string]string {
 	vars["MONGO_DATABASE_COLLECTION_NAME"] = "us=ers"
 	vars["MONGO_OTHER"] = "$A"
 	vars["INTERPOLATED"] = "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $"
+
 	return vars
 }
