@@ -106,6 +106,19 @@ func TestReadToStruct(t *testing.T) {
 	assertEqual(t, configStruct.Struct.Integer, 123)
 }
 
+func TestReadToStructRejectsValuesOutsideFieldWidth(t *testing.T) {
+	configStruct := struct {
+		Value int8
+	}{}
+
+	err := reader.ReadToStruct(&configStruct, func(_ *string) string {
+		return "128"
+	})
+	if err == nil {
+		t.Fatal("error expected")
+	}
+}
+
 func TestReadToStructWithIntParseError(t *testing.T) {
 	configStruct := struct{ Value int }{}
 

@@ -102,18 +102,16 @@ func getDefaultValue(field *reflect.StructField) string {
 func setFieldValue(field *reflect.StructField, fieldValue reflect.Value, value string) error {
 	switch field.Type.Kind() {
 	case reflect.String:
-		if fieldValue.CanSet() {
-			fieldValue.SetString(value)
-		}
+		fieldValue.SetString(value)
 	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
-		v, err := strconv.ParseInt(value, 10, 0)
+		v, err := strconv.ParseInt(value, 10, field.Type.Bits())
 		if err != nil {
 			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 
 		fieldValue.SetInt(v)
 	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
-		v, err := strconv.ParseUint(value, 10, 0)
+		v, err := strconv.ParseUint(value, 10, field.Type.Bits())
 		if err != nil {
 			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
