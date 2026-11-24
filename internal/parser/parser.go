@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"strings"
+	"unicode"
 )
 
 type tokens struct {
@@ -134,8 +135,29 @@ func (p *Parser) updateQuote() {
 	}
 }
 
-func cleanVarValue(v []rune) string {
-	return strings.Trim(strings.TrimSpace(string(v)), `"'`)
+// cleanVarValue trims surrounding whitespace and quotes, and unescapes quotes in quoted values.
+func cleanVarValue(value []rune) string {
+	start, end := 0, len(value)
+
+	for start < end && unicode.IsSpace(value[start]) {
+		start++
+	}
+
+	for start < end && unicode.IsSpace(value[end-1]) {
+		end--
+	}
+
+	if end-start >= 2 && (value[start] == '"' || value[start] == '\'') && value[start] == value[end-1] {
+		for i := start; i < end-1; i++ {
+			if value[i] == '\\' && value[i+1] == value[start] {
+				copy(value[i:], value[i+1:])
+				value = value[:len(value)-1]
+				end--
+			}
+		}
+	}
+
+	return strings.Trim(strings.TrimSpace(string(value)), `"'`)
 }
 
 func New() *Parser {
