@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"strings"
+	"unicode"
 )
 
 type tokens struct {
@@ -17,7 +18,11 @@ type Parser struct {
 	stream       stream
 	tokens       tokens
 	currentToken tokenKind
+	quote        rune
 }
+
+// quotePreviousOffset points to the character before the current quote.
+const quotePreviousOffset = 2
 
 // Parse consumes a reader and detects variables that it will add to the passed vars map.
 func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
@@ -25,6 +30,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 	p.stream = stream{reader: bufio.NewReader(r)}
 	p.tokens = tokens{}
 	p.currentToken = nameToken
+	p.quote = 0
 
 	for {
 		err := p.stream.advance()
@@ -47,7 +53,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 			// the variable value starts (`name=VALUE #comment`).
 			p.setToken(valueToken)
 
-		case p.stream.isAtCommentBegin():
+		case p.isAtCommentBegin():
 			// Comment begins (`name=value #COMMENT`), save last variable.
 			if p.atToken(valueToken) {
 				p.saveVar()
@@ -55,7 +61,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 
 			p.setToken(commentToken)
 
-		case p.stream.isAtLineEnd():
+		case p.isAtLineEnd():
 			// End of line reached, save last variable.
 			if p.atToken(valueToken) {
 				p.saveVar()
@@ -75,6 +81,7 @@ func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 		case p.atToken(valueToken):
 			// Read variable value (`name=VALUE #comment`).
 			p.tokens.value.append(p.stream.current)
+			p.updateQuote()
 		}
 	}
 }
@@ -99,8 +106,58 @@ func (p *Parser) setToken(kind tokenKind) {
 	p.currentToken = kind
 }
 
-func cleanVarValue(v []rune) string {
-	return strings.Trim(strings.TrimSpace(string(v)), `"'`)
+func (p *Parser) isAtCommentBegin() bool {
+	return p.quote == 0 && p.stream.isAtCommentBegin()
+}
+
+func (p *Parser) isAtLineEnd() bool {
+	return p.quote == 0 && p.stream.isAtLineEnd()
+}
+
+func (p *Parser) updateQuote() {
+	if p.stream.current != '"' && p.stream.current != '\'' {
+		return
+	}
+
+	// An odd number of preceding backslashes means the quote is escaped.
+	backslashes := 0
+	for i := len(p.tokens.value) - quotePreviousOffset; i >= 0 && p.tokens.value[i] == '\\'; i-- {
+		backslashes++
+	}
+
+	if backslashes%2 == 0 {
+		switch p.quote {
+		case 0:
+			p.quote = p.stream.current
+		case p.stream.current:
+			p.quote = 0
+		}
+	}
+}
+
+// cleanVarValue trims surrounding whitespace and quotes, and unescapes quotes in quoted values.
+func cleanVarValue(value []rune) string {
+	start, end := 0, len(value)
+
+	for start < end && unicode.IsSpace(value[start]) {
+		start++
+	}
+
+	for start < end && unicode.IsSpace(value[end-1]) {
+		end--
+	}
+
+	if end-start >= 2 && (value[start] == '"' || value[start] == '\'') && value[start] == value[end-1] {
+		for i := start; i < end-1; i++ {
+			if value[i] == '\\' && value[i+1] == value[start] {
+				copy(value[i:], value[i+1:])
+				value = value[:len(value)-1]
+				end--
+			}
+		}
+	}
+
+	return strings.Trim(strings.TrimSpace(string(value)), `"'`)
 }
 
 func New() *Parser {

@@ -98,7 +98,7 @@ func TestFromBytesWithNilInput(t *testing.T) {
 
 func TestFromJSON(t *testing.T) {
 	jsonString := testdata.ReadInputFile("testdata/env.json")
-	expected := testdata.GetExpectedOutput()
+	expected := testdata.GetExpectedJSONOutput()
 
 	var input json.RawMessage
 	if err := json.Unmarshal(jsonString, &input); err != nil {

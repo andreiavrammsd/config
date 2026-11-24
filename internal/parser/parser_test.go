@@ -34,7 +34,7 @@ func TestParse(t *testing.T) {
 		t.Error("expected no error")
 	}
 
-	expectedNumberOfVars := 67 // IS THIS OK?
+	expectedNumberOfVars := 65 // IS THIS OK?
 	if len(vars) != expectedNumberOfVars {
 		t.Fatalf("Expected %d vars, got %d", expectedNumberOfVars, len(vars))
 	}
@@ -54,7 +54,7 @@ func TestParse(t *testing.T) {
 	assertVar(t, vars, "H", "quote \"inside\" quote")
 	assertVar(t, vars, "I", "line1\\nline2")
 	assertVar(t, vars, "J", "tab\\tseparated")
-	assertVar(t, vars, "ABC", " string\\\" ")
+	assertVar(t, vars, "ABC", " string\" ")
 	assertVar(t, vars, "K", "Emoji 🚀 and Unicode ü")
 	assertVar(t, vars, "L", "spaced_key")
 	assertVar(t, vars, "M", "spaced_value")
@@ -63,7 +63,7 @@ func TestParse(t *testing.T) {
 	assertVar(t, vars, "NOT_NUM", "---1")
 	assertVar(t, vars, "POS_NUM", "+1")
 	assertVar(t, vars, "POS_NOT_NUM", "++1")
-	// FAILS: assertVar(t, vars, "O", "#notacomment")
+	assertVar(t, vars, "O", "#notacomment")
 	assertVar(t, vars, "O2", "")
 	assertVar(t, vars, "P", "key=value=another")
 	assertVar(t, vars, "Q", "$UNDEFINED_VAR")
@@ -103,17 +103,31 @@ func TestParse(t *testing.T) {
 	assertVar(t, vars, "EE", "[this looks like json]")
 	assertVar(t, vars, "EE2", "[this looks like json]")
 	assertVar(t, vars, "EE3", "[this looks like json]")
-	// IS THIS OK? assertVar(t, vars, "EE4", "[this looks like json]")
-	// IS THIS OK? assertVar(t, vars, "EE5", "[this looks like json]")
-	// FAILS: assertVar(t, vars, "FF", "{ \"name\": \"John\", \"age\": 30 }")
+	// EE4 is missing because it's incorrectly quoted.
+	// EE5 is missing because it's incorrectly quoted.
+	assertVar(t, vars, "FF", "{ \"name\": \"John\", \"age\": 30 }")
 	assertVar(t, vars, "ARRAY", "one,two,three")
 	assertVar(t, vars, "EMPTY1", "")
 	assertVar(t, vars, "EMPTY2", "")
 	assertVar(t, vars, "NUM_STRING", "12345")
-	// FAILS: assertVar(t, vars, "BROKEN_NEWLINE", "this is\nstill valid because quotes stay open")
-	// FAILS: assertVar(t, vars, "BROKEN_NEWLINE_SINGLE_QUOTES", "this is\nstill valid because quotes stay open")
+	assertVar(t, vars, "BROKEN_NEWLINE", "this is\nstill valid because quotes stay open")
+	assertVar(t, vars, "BROKEN_NEWLINE_SINGLE_QUOTES", "this is\nstill valid because quotes stay open")
 	assertVar(t, vars, "XX", "second")
 	assertVar(t, vars, "INTERPOLATED", "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $")
+}
+
+func TestParseMultilineQuotedValue(t *testing.T) {
+	vars := make(map[string]string)
+
+	err := parser.New().Parse(
+		bytes.NewBufferString("MULTILINE_QUOTED=\"this is\nquoted\nvalue\""),
+		vars,
+	)
+	if err != nil {
+		t.Fatal("expected no error:", err)
+	}
+
+	assertVar(t, vars, "MULTILINE_QUOTED", "this is\nquoted\nvalue")
 }
 
 type eofReader struct {

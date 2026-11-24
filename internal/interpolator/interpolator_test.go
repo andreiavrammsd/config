@@ -6,6 +6,8 @@ import (
 	"github.com/andreiavrammsd/config/internal/interpolator"
 )
 
+const valueKey = "VALUE"
+
 func assertEqual(t *testing.T, actual, expected string) {
 	t.Helper()
 
@@ -32,6 +34,54 @@ func TestInterpolate(t *testing.T) {
 	assertEqual(t, vars["MONGO_DATABASE_COLLECTION_NAME"], "us=ers")
 	assertEqual(t, vars["MONGO_OTHER"], "1")
 	assertEqual(t, vars["INTERPOLATED"], "$B env_1 $ $B \\xx 6379 + $")
+}
+
+func TestInterpolatePreservesUnicode(t *testing.T) {
+	vars := map[string]string{valueKey: "é $A", "A": "x"}
+
+	interpolator.New().Interpolate(vars)
+
+	assertEqual(t, vars[valueKey], "é x")
+}
+
+func TestInterpolateHandlesEscapedVariableAtEnd(t *testing.T) {
+	vars := map[string]string{valueKey: `\$`}
+
+	interpolator.New().Interpolate(vars)
+
+	assertEqual(t, vars[valueKey], "$")
+}
+
+func TestInterpolateHandlesDoubleEscapeAtEnd(t *testing.T) {
+	vars := map[string]string{valueKey: `\\`}
+
+	interpolator.New().Interpolate(vars)
+
+	assertEqual(t, vars[valueKey], `\\`)
+}
+
+func TestInterpolateResolvesNestedVariables(t *testing.T) {
+	vars := map[string]string{
+		"A":      "$B",
+		"B":      "resolved",
+		valueKey: "$A",
+	}
+
+	interpolator.New().Interpolate(vars)
+
+	assertEqual(t, vars[valueKey], "resolved")
+}
+
+func TestInterpolateRecursesIntoUnresolvedVariable(t *testing.T) {
+	vars := map[string]string{
+		"A":      "$B",
+		"B":      "$A",
+		"NESTED": "$A",
+	}
+
+	interpolator.New().Interpolate(vars)
+
+	assertEqual(t, vars["NESTED"], "$A")
 }
 
 // Benchmark_Interpolate-8          1357365               922.1 ns/op           280 B/op          6 allocs/op.

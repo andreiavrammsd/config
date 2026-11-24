@@ -3,6 +3,7 @@ package interpolator
 import (
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 type value struct {
@@ -25,15 +26,43 @@ func (ip *value) nextVarIsEscaped() bool {
 }
 
 func (ip *value) current() rune {
-	return rune(ip.content[ip.i])
+	current, _ := utf8.DecodeRuneInString(ip.content[ip.i:])
+	return current
 }
 
 func (ip *value) peek(steps int) rune {
-	if ip.i+steps < 0 || ip.i+steps >= len(ip.content) {
+	position := ip.i
+
+	if steps < 0 {
+		for range -steps {
+			if position == 0 {
+				return 0
+			}
+
+			position--
+			for position > 0 && !utf8.RuneStart(ip.content[position]) {
+				position--
+			}
+		}
+	} else {
+		for range steps {
+			_, size := utf8.DecodeRuneInString(ip.content[position:])
+			position += size
+		}
+	}
+
+	if position >= len(ip.content) {
 		return 0
 	}
 
-	return rune(ip.content[ip.i+steps])
+	next, _ := utf8.DecodeRuneInString(ip.content[position:])
+
+	return next
+}
+
+func (ip *value) advance() {
+	_, size := utf8.DecodeRuneInString(ip.content[ip.i:])
+	ip.i += size
 }
 
 func (ip *value) isOpenBrace() bool {
@@ -49,7 +78,6 @@ func (ip *value) isAtSpace() bool {
 }
 
 type variable struct {
-	name  []rune
 	value []rune
 }
 
@@ -82,13 +110,15 @@ type Interpolator struct {
 func (ip *Interpolator) Interpolate(vars map[string]string) {
 	ip.vars = vars
 
-	for key, value := range ip.vars {
+	for key, value := range vars {
 		ip.rawValue.content = value
 
-		if ip.rawValueContainsVars() {
-			ip.parseVars()
-			vars[key] = string(ip.interpolatedVar.value)
+		if !ip.rawValueContainsVars() {
+			continue
 		}
+
+		ip.parseVars()
+		vars[key] = string(ip.interpolatedVar.value)
 	}
 }
 
@@ -97,79 +127,85 @@ func (ip *Interpolator) rawValueContainsVars() bool {
 }
 
 func (ip *Interpolator) parseVars() {
-	atVar := false // Notifies we're in the context of a variable: `text $IT_IS_HERE more text`.
-	ip.interpolatedVar.name = nil
 	ip.interpolatedVar.value = nil
+	ip.parseValue(&ip.rawValue, 0)
+}
 
-	for ip.rawValue.i = 0; ip.rawValue.i < len(ip.rawValue.content); ip.rawValue.i++ {
+func (ip *Interpolator) parseValue(rawValue *value, depth int) {
+	atVar := false // Notifies we're in the context of a variable: `text $IT_IS_HERE more text`.
+
+	var name []rune
+
+	for rawValue.i = 0; rawValue.i < len(rawValue.content); rawValue.advance() {
 		// Variable starts now. Continue to get its name and value.
-		if ip.varStarts() {
+		if ip.varStarts(rawValue) {
 			atVar = true
 			continue
 		}
 
 		// Variable is between braces: ${VARIABLE}. Continue ignoring braces.
-		if atVar && (ip.rawValue.isOpenBrace() || ip.rawValue.isCloseBrace()) {
+		if atVar && (rawValue.isOpenBrace() || rawValue.isCloseBrace()) {
 			continue
 		}
 
 		if !atVar {
-			if ip.rawValue.nextVarIsDoubleEscaped() {
-				ip.appendCurrentCharacterToNewValue()
+			if rawValue.nextVarIsDoubleEscaped() {
+				ip.appendCurrentCharacterToNewValue(rawValue.current())
 				continue
 			}
 
-			if ip.rawValue.nextVarIsEscaped() {
+			if rawValue.nextVarIsEscaped() {
 				continue
 			}
 
 			// Append literal.
-			ip.appendCurrentCharacterToNewValue()
+			ip.appendCurrentCharacterToNewValue(rawValue.current())
 
 			continue
 		}
 
 		// Variable ends when a space is found. Append literal.
-		if ip.rawValue.isAtSpace() {
-			ip.appendAllToNewValue()
-			ip.appendCurrentCharacterToNewValue()
-			ip.interpolatedVar.name = nil
+		if rawValue.isAtSpace() {
+			ip.appendVariable(name, depth)
+			ip.appendCurrentCharacterToNewValue(rawValue.current())
+
+			name = nil
 			atVar = false
 
 			continue
 		}
 
-		ip.appendToName()
+		name = append(name, rawValue.current())
 	}
 
 	if atVar {
-		ip.appendAllToNewValue()
+		ip.appendVariable(name, depth)
 	}
 }
 
-func (ip *Interpolator) varStarts() bool {
+func (ip *Interpolator) varStarts(rawValue *value) bool {
 	// Litteral dollar sign at the end: `text $`.
-	if isDolar(ip.rawValue.current()) && ip.rawValue.atEnd() {
+	if isDolar(rawValue.current()) && rawValue.atEnd() {
 		return false
 	}
 
 	// Normal variable: `text $VAR text`. Will use its value.
-	if !isDolar(ip.rawValue.current()) {
+	if !isDolar(rawValue.current()) {
 		return false
 	}
 
 	// Variable is double escaped: `text \\$VAR text`. The escape character is actually escaped.
 	// Will use an escape character and variable's value.
-	if isEscape(ip.rawValue.peek(-2)) && isEscape(ip.rawValue.peek(-1)) {
+	if isEscape(rawValue.peek(-2)) && isEscape(rawValue.peek(-1)) {
 		return true
 	}
 
 	// Variable is escaped: `text \$VAR text`. Actually not a variable. Will use it literally.
-	if isEscape(ip.rawValue.peek(-1)) {
+	if isEscape(rawValue.peek(-1)) {
 		return false
 	}
 
-	next := ip.rawValue.peek(1)
+	next := rawValue.peek(1)
 	if unicode.IsSpace(next) || next == '"' || next == '\'' {
 		return false
 	}
@@ -177,16 +213,19 @@ func (ip *Interpolator) varStarts() bool {
 	return true
 }
 
-func (ip *Interpolator) appendToName() {
-	ip.interpolatedVar.name = append(ip.interpolatedVar.name, ip.rawValue.current())
+func (ip *Interpolator) appendVariable(name []rune, depth int) {
+	raw := ip.vars[string(name)]
+	if depth >= len(ip.vars) || !strings.Contains(raw, "$") {
+		ip.interpolatedVar.value = append(ip.interpolatedVar.value, []rune(raw)...)
+		return
+	}
+
+	nestedValue := value{content: raw}
+	ip.parseValue(&nestedValue, depth+1)
 }
 
-func (ip *Interpolator) appendCurrentCharacterToNewValue() {
-	ip.interpolatedVar.value = append(ip.interpolatedVar.value, ip.rawValue.current())
-}
-
-func (ip *Interpolator) appendAllToNewValue() {
-	ip.interpolatedVar.value = append(ip.interpolatedVar.value, []rune(ip.vars[string(ip.interpolatedVar.name)])...)
+func (ip *Interpolator) appendCurrentCharacterToNewValue(current rune) {
+	ip.interpolatedVar.value = append(ip.interpolatedVar.value, current)
 }
 
 func isEscape(r rune) bool {

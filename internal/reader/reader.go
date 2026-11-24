@@ -38,11 +38,16 @@ func parse(typ reflect.Type, val reflect.Value, readValue ValueReader, path stri
 			val = val.Elem()
 		}
 
+		fieldValue := val.Field(i)
+		if !fieldValue.CanSet() {
+			continue
+		}
+
 		path += field.Name + "_"
 
 		// Parse struct recursively.
 		if field.Type.Kind() == reflect.Struct {
-			if err := parse(field.Type, val.Field(i), readValue, path); err != nil {
+			if err := parse(field.Type, fieldValue, readValue, path); err != nil {
 				return err
 			}
 
@@ -54,7 +59,7 @@ func parse(typ reflect.Type, val reflect.Value, readValue ValueReader, path stri
 			continue
 		}
 
-		if err := setFieldValue(&field, val.Field(i), value); err != nil {
+		if err := setFieldValue(&field, fieldValue, value); err != nil {
 			return err
 		}
 
@@ -102,18 +107,16 @@ func getDefaultValue(field *reflect.StructField) string {
 func setFieldValue(field *reflect.StructField, fieldValue reflect.Value, value string) error {
 	switch field.Type.Kind() {
 	case reflect.String:
-		if fieldValue.CanSet() {
-			fieldValue.SetString(value)
-		}
+		fieldValue.SetString(value)
 	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
-		v, err := strconv.ParseInt(value, 10, 0)
+		v, err := strconv.ParseInt(value, 10, field.Type.Bits())
 		if err != nil {
 			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}
 
 		fieldValue.SetInt(v)
 	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
-		v, err := strconv.ParseUint(value, 10, 0)
+		v, err := strconv.ParseUint(value, 10, field.Type.Bits())
 		if err != nil {
 			return fmt.Errorf("field %s (%w)", field.Name, err)
 		}

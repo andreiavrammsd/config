@@ -64,7 +64,7 @@ func ReadInputFile(file string) []byte {
 
 func GetExpectedOutput() Config {
 	return Config{
-		String: " string\\\" ",
+		String: " string\" ",
 		A:      1,
 		B:      2,
 		C:      3,
@@ -128,4 +128,12 @@ func GetExpectedOutput() Config {
 		Interpolated: "$B env_1 $ $B \\3 6379 + $",
 		Default:      "default value",
 	}
+}
+
+// GetExpectedJSONOutput preserves JSON's escaped quote in the String field.
+func GetExpectedJSONOutput() Config {
+	expected := GetExpectedOutput()
+	expected.String = ` string\" `
+
+	return expected
 }
