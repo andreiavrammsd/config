@@ -106,6 +106,24 @@ func TestReadToStruct(t *testing.T) {
 	assertEqual(t, configStruct.Struct.Integer, 123)
 }
 
+func TestReadToStructIgnoresUnexportedFields(t *testing.T) {
+	configStruct := struct {
+		value int
+	}{}
+	called := false
+
+	err := reader.ReadToStruct(&configStruct, func(_ *string) string {
+		called = true
+		return "1"
+	})
+	if err != nil {
+		t.Fatal("error not expected:", err)
+	}
+	if called {
+		t.Fatal("reader called for an unexported field")
+	}
+}
+
 func TestReadToStructRejectsValuesOutsideFieldWidth(t *testing.T) {
 	configStruct := struct {
 		Value int8

@@ -38,11 +38,16 @@ func parse(typ reflect.Type, val reflect.Value, readValue ValueReader, path stri
 			val = val.Elem()
 		}
 
+		fieldValue := val.Field(i)
+		if !fieldValue.CanSet() {
+			continue
+		}
+
 		path += field.Name + "_"
 
 		// Parse struct recursively.
 		if field.Type.Kind() == reflect.Struct {
-			if err := parse(field.Type, val.Field(i), readValue, path); err != nil {
+			if err := parse(field.Type, fieldValue, readValue, path); err != nil {
 				return err
 			}
 
@@ -54,7 +59,7 @@ func parse(typ reflect.Type, val reflect.Value, readValue ValueReader, path stri
 			continue
 		}
 
-		if err := setFieldValue(&field, val.Field(i), value); err != nil {
+		if err := setFieldValue(&field, fieldValue, value); err != nil {
 			return err
 		}
 
