@@ -46,10 +46,6 @@ func (ip *value) peek(steps int) rune {
 		}
 	} else {
 		for range steps {
-			if position >= len(ip.content) {
-				return 0
-			}
-
 			_, size := utf8.DecodeRuneInString(ip.content[position:])
 			position += size
 		}
