@@ -3,6 +3,7 @@ package interpolator
 import (
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 type value struct {
@@ -25,15 +26,47 @@ func (ip *value) nextVarIsEscaped() bool {
 }
 
 func (ip *value) current() rune {
-	return rune(ip.content[ip.i])
+	current, _ := utf8.DecodeRuneInString(ip.content[ip.i:])
+	return current
 }
 
 func (ip *value) peek(steps int) rune {
-	if ip.i+steps < 0 || ip.i+steps >= len(ip.content) {
+	position := ip.i
+
+	if steps < 0 {
+		for range -steps {
+			if position == 0 {
+				return 0
+			}
+
+			position--
+			for position > 0 && !utf8.RuneStart(ip.content[position]) {
+				position--
+			}
+		}
+	} else {
+		for range steps {
+			if position >= len(ip.content) {
+				return 0
+			}
+
+			_, size := utf8.DecodeRuneInString(ip.content[position:])
+			position += size
+		}
+	}
+
+	if position >= len(ip.content) {
 		return 0
 	}
 
-	return rune(ip.content[ip.i+steps])
+	next, _ := utf8.DecodeRuneInString(ip.content[position:])
+
+	return next
+}
+
+func (ip *value) advance() {
+	_, size := utf8.DecodeRuneInString(ip.content[ip.i:])
+	ip.i += size
 }
 
 func (ip *value) isOpenBrace() bool {
@@ -82,13 +115,15 @@ type Interpolator struct {
 func (ip *Interpolator) Interpolate(vars map[string]string) {
 	ip.vars = vars
 
-	for key, value := range ip.vars {
+	for key, value := range vars {
 		ip.rawValue.content = value
 
-		if ip.rawValueContainsVars() {
-			ip.parseVars()
-			vars[key] = string(ip.interpolatedVar.value)
+		if !ip.rawValueContainsVars() {
+			continue
 		}
+
+		ip.parseVars()
+		vars[key] = string(ip.interpolatedVar.value)
 	}
 }
 
@@ -101,7 +136,7 @@ func (ip *Interpolator) parseVars() {
 	ip.interpolatedVar.name = nil
 	ip.interpolatedVar.value = nil
 
-	for ip.rawValue.i = 0; ip.rawValue.i < len(ip.rawValue.content); ip.rawValue.i++ {
+	for ip.rawValue.i = 0; ip.rawValue.i < len(ip.rawValue.content); ip.rawValue.advance() {
 		// Variable starts now. Continue to get its name and value.
 		if ip.varStarts() {
 			atVar = true

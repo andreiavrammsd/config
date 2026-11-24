@@ -34,6 +34,14 @@ func TestInterpolate(t *testing.T) {
 	assertEqual(t, vars["INTERPOLATED"], "$B env_1 $ $B \\xx 6379 + $")
 }
 
+func TestInterpolatePreservesUnicode(t *testing.T) {
+	vars := map[string]string{"VALUE": "é $A", "A": "x"}
+
+	interpolator.New().Interpolate(vars)
+
+	assertEqual(t, vars["VALUE"], "é x")
+}
+
 // Benchmark_Interpolate-8          1357365               922.1 ns/op           280 B/op          6 allocs/op.
 func Benchmark_Interpolate(b *testing.B) {
 	interpolator := interpolator.New()
