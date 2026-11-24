@@ -34,7 +34,7 @@ func TestParse(t *testing.T) {
 		t.Error("expected no error")
 	}
 
-	expectedNumberOfVars := 67 // IS THIS OK?
+	expectedNumberOfVars := 65 // IS THIS OK?
 	if len(vars) != expectedNumberOfVars {
 		t.Fatalf("Expected %d vars, got %d", expectedNumberOfVars, len(vars))
 	}
@@ -110,10 +110,24 @@ func TestParse(t *testing.T) {
 	assertVar(t, vars, "EMPTY1", "")
 	assertVar(t, vars, "EMPTY2", "")
 	assertVar(t, vars, "NUM_STRING", "12345")
-	// FAILS: assertVar(t, vars, "BROKEN_NEWLINE", "this is\nstill valid because quotes stay open")
-	// FAILS: assertVar(t, vars, "BROKEN_NEWLINE_SINGLE_QUOTES", "this is\nstill valid because quotes stay open")
+	assertVar(t, vars, "BROKEN_NEWLINE", "this is\nstill valid because quotes stay open")
+	assertVar(t, vars, "BROKEN_NEWLINE_SINGLE_QUOTES", "this is\nstill valid because quotes stay open")
 	assertVar(t, vars, "XX", "second")
 	assertVar(t, vars, "INTERPOLATED", "\\$B env_$A $ \\$B \\\\$C ${REDIS_PORT} + $")
+}
+
+func TestParseMultilineQuotedValue(t *testing.T) {
+	vars := make(map[string]string)
+
+	err := parser.New().Parse(
+		bytes.NewBufferString("MULTILINE_QUOTED=\"this is\nquoted\nvalue\""),
+		vars,
+	)
+	if err != nil {
+		t.Fatal("expected no error:", err)
+	}
+
+	assertVar(t, vars, "MULTILINE_QUOTED", "this is\nquoted\nvalue")
 }
 
 type eofReader struct {
