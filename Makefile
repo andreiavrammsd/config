@@ -3,7 +3,7 @@ GOLANGCI_LINT_VERSION=2.15.0
 all: test lint
 
 test:
-	go test -vet=all -run=Test ./...
+	go test -count=100 -vet=all -run=Test ./...
 
 lint: install-lint
 	@golangci-lint config verify

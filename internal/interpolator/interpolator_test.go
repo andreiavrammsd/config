@@ -42,6 +42,18 @@ func TestInterpolatePreservesUnicode(t *testing.T) {
 	assertEqual(t, vars["VALUE"], "é x")
 }
 
+func TestInterpolateResolvesNestedVariables(t *testing.T) {
+	vars := map[string]string{
+		"A":     "$B",
+		"B":     "resolved",
+		"VALUE": "$A",
+	}
+
+	interpolator.New().Interpolate(vars)
+
+	assertEqual(t, vars["VALUE"], "resolved")
+}
+
 // Benchmark_Interpolate-8          1357365               922.1 ns/op           280 B/op          6 allocs/op.
 func Benchmark_Interpolate(b *testing.B) {
 	interpolator := interpolator.New()
