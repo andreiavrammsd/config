@@ -20,5 +20,5 @@ func (t *token) append(r rune) {
 }
 
 func (t *token) reset() {
-	*t = nil
+	*t = (*t)[:0]
 }

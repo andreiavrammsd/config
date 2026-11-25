@@ -182,16 +182,19 @@ func TestParseWithReaderError(t *testing.T) {
 
 // Benchmark_Parse-8        1623301               709.7 ns/op          4192 B/op          2 allocs/op.
 func Benchmark_Parse(b *testing.B) {
+	input := testdata("testdata/.env")
+	reader := bytes.NewReader(input)
+	vars := make(map[string]string, 16)
 	benchParser := parser.New()
-	reader := bytes.NewReader(testdata("testdata/.env"))
-	vars := make(map[string]string)
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for range b.N {
-		err := benchParser.Parse(reader, vars)
-		if err != nil {
+		reader.Reset(input)
+		clear(vars)
+
+		if err := benchParser.Parse(reader, vars); err != nil {
 			b.Fatal(err)
 		}
 	}
