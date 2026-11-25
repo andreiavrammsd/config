@@ -2,12 +2,21 @@ package parser
 
 import (
 	"bufio"
+	"io"
 	"unicode"
 )
 
 type stream struct {
 	reader  *bufio.Reader
 	current rune
+}
+
+func (s *stream) reset(r io.Reader) {
+	if s.reader == nil {
+		s.reader = bufio.NewReader(r)
+	} else {
+		s.reader.Reset(r)
+	}
 }
 
 func (s *stream) advance() (err error) {

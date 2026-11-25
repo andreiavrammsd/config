@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"bufio"
 	"errors"
 	"io"
 	"strings"
@@ -11,6 +10,11 @@ import (
 type tokens struct {
 	name  token
 	value token
+}
+
+func (t *tokens) reset() {
+	t.name.reset()
+	t.value.reset()
 }
 
 type Parser struct {
@@ -27,8 +31,8 @@ const quotePreviousOffset = 2
 // Parse consumes a reader and detects variables that it will add to the passed vars map.
 func (p *Parser) Parse(r io.Reader, vars map[string]string) error {
 	p.vars = vars
-	p.stream = stream{reader: bufio.NewReader(r)}
-	p.tokens = tokens{}
+	p.stream.reset(r)
+	p.tokens.reset()
 	p.currentToken = nameToken
 	p.quote = 0
 
